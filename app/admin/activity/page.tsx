@@ -31,7 +31,7 @@ const TABLES: Record<string, string[]> = {
   clients: ["clients"],
   files: ["attachments"],
   users: ["users"],
-  company: ["companies", "subscription"],
+  company: ["companies", "subscription", "design"],
 };
 const RANGES = [
   ["1", "Today"],

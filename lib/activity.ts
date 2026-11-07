@@ -60,6 +60,9 @@ export function describe(r: ActivityRow, codes: Record<string, string>): Describ
       return { icon: "👤", color: "#8b5cf6", text: map[r.action] || `User ${r.action}`, group: "users" };
     }
 
+    case "design":
+      return { icon: "🎨", color: "#db2777", text: `Changed the PDF design (${n.style || "style"})`, group: "company" };
+
     case "subscription": {
       const map: Record<string, string> = {
         payment_recorded: `Recorded subscription payment: ${n.months} month(s), ${Number(n.amount || 0).toFixed(3)} OMR, ${n.plan} plan`,

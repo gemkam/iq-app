@@ -141,7 +141,10 @@ export default function Companies() {
               </div>
               <div className="flex gap-2">
                 {active ? (
-                  m.role === "admin" && <Link href="/settings" className="btn-light">Edit details</Link>
+                  <>
+                    {(m.role === "admin" || m.role === "owner") && <Link href="/design" className="btn-accent">🎨 PDF design</Link>}
+                    {m.role === "admin" && <Link href="/settings" className="btn-light">Edit details</Link>}
+                  </>
                 ) : (
                   <button className="btn-primary" onClick={() => switchCompany(m.company_id)}>Switch to this company</button>
                 )}

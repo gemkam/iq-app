@@ -8,6 +8,7 @@ export type Company = {
   phone: string | null;
   email: string | null;
   logo_url: string | null;
+  pdf_template?: Record<string, unknown> | null;
   currency: string;
   vat_rate: number;
   vat_registered: boolean;

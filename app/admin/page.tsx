@@ -3,6 +3,7 @@ import Link from "next/link";
 import AdminOnly from "@/components/AdminOnly";
 
 const tiles = [
+  { href: "/design", title: "PDF design", text: "Logo, colors, style, stamp, bank details on quotations and invoices", icon: "🎨" },
   { href: "/admin/subscriptions", title: "Subscriptions", text: "Free trials, payments, renewals and suspended companies", icon: "💳" },
   { href: "/admin/activity", title: "Activity", text: "Who did what: logins, quotations, invoices, payments, users", icon: "📊" },
   { href: "/admin/users", title: "Users", text: "Create users, reset passwords, disable access", icon: "👥" },
