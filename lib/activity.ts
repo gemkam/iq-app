@@ -42,9 +42,9 @@ export function describe(r: ActivityRow, codes: Record<string, string>): Describ
 
   switch (r.table_name) {
     case "session":
-      return r.action === "login"
-        ? { icon: "🔑", color: "#06b6d4", text: "Logged in", group: "session" }
-        : { icon: "🚪", color: "#64748b", text: "Logged out", group: "session" };
+      if (r.action === "login") return { icon: "🔑", color: "#06b6d4", text: "Logged in", group: "session" };
+      if (r.action === "own_password_changed") return { icon: "🔒", color: "#8b5cf6", text: "Changed their own password", group: "session" };
+      return { icon: "🚪", color: "#64748b", text: "Logged out", group: "session" };
 
     case "users": {
       const who = `${d.full_name || d.username} (${d.username})`;

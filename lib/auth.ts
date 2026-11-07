@@ -8,7 +8,7 @@ export const toEmail = (u: string) => `${u.trim().toLowerCase()}@${DOMAIN}`;
 export const toPassword = (p: string) => `IQ::${p}`;
 
 // Records login/logout in the activity log (Admin → Activity). Never blocks the user.
-async function logSession(action: "login" | "logout") {
+async function logSession(action: "login" | "logout" | "own_password_changed") {
   try {
     let cid = getActiveCompanyId();
     if (!cid) {
@@ -35,6 +35,17 @@ export async function login(username: string, password: string) {
 export async function guestLogin() {
   await adminCall("guest_login");
   await login("guest", "guest-view");
+}
+
+// Any signed-in user (not the guest) changes their own password.
+// The current password is checked first.
+export async function changeOwnPassword(username: string, current: string, next: string) {
+  if (next.length < 4) throw new Error("New password must be at least 4 characters.");
+  const { error: checkErr } = await supabase.auth.signInWithPassword({ email: toEmail(username), password: toPassword(current) });
+  if (checkErr) throw new Error("Current password is wrong.");
+  const { error } = await supabase.auth.updateUser({ password: toPassword(next) });
+  if (error) throw new Error(error.message);
+  logSession("own_password_changed");
 }
 
 export async function logout() {

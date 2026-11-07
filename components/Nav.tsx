@@ -62,6 +62,16 @@ export default function Nav() {
             <span className="md:hidden">?</span>
             <span className="hidden md:inline">Help {help ? "On" : "Off"}</span>
           </button>
+          {!isGuest && (
+            <Link
+              href="/account"
+              className="grid h-8 w-8 place-items-center rounded-lg border border-white/30 hover:bg-white/10"
+              title="My account and password"
+              aria-label="My account"
+            >
+              👤
+            </Link>
+          )}
           <ThemeToggle />
           <button className="rounded-lg border border-white/30 px-2.5 py-1 hover:bg-white/10" onClick={logout}>
             Logout

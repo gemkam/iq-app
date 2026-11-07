@@ -12,10 +12,10 @@ export default function CompanySwitcher() {
   const many = memberships.length > 1;
 
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0 sm:max-w-[240px]">
       <button
         onClick={() => setOpen(!open)}
-        className="flex max-w-[44vw] items-center gap-1.5 rounded-lg border border-white/20 px-2.5 py-1 text-left text-sm hover:bg-white/10 sm:max-w-[240px]"
+        className="flex w-full max-w-full items-center gap-1.5 rounded-lg border border-white/20 px-2.5 py-1 text-left text-sm hover:bg-white/10"
         title="Switch company"
       >
         <span className="truncate font-semibold">{me.company_name}</span>
