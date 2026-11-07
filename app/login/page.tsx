@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { adminCall, login } from "@/lib/auth";
+import { adminCall, guestLogin, login } from "@/lib/auth";
 import AuthCard from "@/components/AuthCard";
 
 export default function Login() {
@@ -16,6 +16,19 @@ export default function Login() {
       .then((r) => r.needs_setup && router.replace("/setup"))
       .catch(() => {});
   }, [router]);
+
+  const asGuest = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      await guestLogin();
+      router.replace("/");
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +57,13 @@ export default function Login() {
       {err && <p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{err}</p>}
       <button className="btn-primary w-full py-3" disabled={busy || !u || !p}>{busy ? "Logging in..." : "Log in"}</button>
     </form>
+    <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+      <span className="h-px flex-1 bg-slate-200" /> OR <span className="h-px flex-1 bg-slate-200" />
+    </div>
+    <button type="button" className="btn-light w-full py-3" disabled={busy} onClick={asGuest}>
+      Continue as Guest
+    </button>
+    <p className="mt-2 text-center text-xs text-slate-500">Guests can view everything but cannot make changes.</p>
   </AuthCard>;
 }
 

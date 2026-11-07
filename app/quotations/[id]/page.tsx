@@ -11,6 +11,7 @@ import QuotationForm from "@/components/QuotationForm";
 import Explain, { Calc } from "@/components/Explain";
 import ShareButton from "@/components/ShareButton";
 import Attachments from "@/components/Attachments";
+import { useMe } from "@/components/AuthGate";
 import type { Invoice, Item, Quotation } from "@/lib/types";
 
 export default function QuotationPage() {
@@ -18,6 +19,7 @@ export default function QuotationPage() {
   const router = useRouter();
   const autoShare = useSearchParams().get("share") === "1";
   const { company } = useCompany();
+  const { isGuest } = useMe();
   const [q, setQ] = useState<Quotation | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -68,14 +70,14 @@ export default function QuotationPage() {
         <div className="flex flex-wrap gap-2">
           <ShareButton autoOpen={autoShare} token={q.share_token} title={`Quotation ${q.code}`} clientName={q.clients?.name} total={q.total} mobile={q.mobile} />
           <Link href={`/quotations/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
-          {q.status === "draft" && <button className="btn-light" onClick={() => setStatus("submitted")}>Mark submitted</button>}
-          {(q.status === "draft" || q.status === "submitted") && (
+          {!isGuest && q.status === "draft" && <button className="btn-light" onClick={() => setStatus("submitted")}>Mark submitted</button>}
+          {!isGuest && (q.status === "draft" || q.status === "submitted") && (
             <>
               <button className="btn-light text-emerald-700" onClick={() => setStatus("approved")}>Mark approved</button>
               <button className="btn-light text-red-600" onClick={() => setStatus("rejected")}>Mark rejected</button>
             </>
           )}
-          {q.status === "rejected" && <button className="btn-light" onClick={() => setStatus("submitted")}>Reopen</button>}
+          {!isGuest && q.status === "rejected" && <button className="btn-light" onClick={() => setStatus("submitted")}>Reopen</button>}
         </div>
       </div>
       {msg && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{msg}</p>}
@@ -89,7 +91,7 @@ export default function QuotationPage() {
 
       <QuotationForm key={ver} company={company} quotation={q} initialItems={items} onSaved={load} />
 
-      {q.status !== "rejected" && (
+      {!isGuest && q.status !== "rejected" && (
         <ConvertPanel
           quotationId={q.id}
           net={net}

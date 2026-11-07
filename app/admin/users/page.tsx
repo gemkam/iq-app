@@ -8,7 +8,7 @@ import Explain from "@/components/Explain";
 
 type U = {
   user_id: string;
-  role: "owner" | "admin" | "staff";
+  role: "owner" | "admin" | "staff" | "guest";
   username: string | null;
   full_name: string | null;
   is_active: boolean;
@@ -16,7 +16,7 @@ type U = {
   last_sign_in_at: string | null;
 };
 
-const roleName = { owner: "Owner", admin: "Admin", staff: "User" };
+const roleName = { owner: "Owner", admin: "Admin", staff: "User", guest: "Guest (view only)" };
 
 export default function Users() {
   const [users, setUsers] = useState<U[]>([]);
@@ -82,6 +82,7 @@ export default function Users() {
           <p>Create a login for each tester. Give them the <b>username</b> and <b>password</b> shown in the green message.</p>
           <p><b>Disable</b> stops a user from logging in (their work stays). <b>Change password</b> sets a new one.</p>
           <p>Every change in quotations and invoices shows <b>who</b> made it in the Change history.</p>
+          <p><b>Guest:</b> anyone can tap &quot;Continue as Guest&quot; on the login page to view the app without changing anything. The Guest account appears here after the first guest visit. Disable it to turn guest access off.</p>
         </Explain>
 
         <form onSubmit={create} className="card grid gap-3 p-4 sm:grid-cols-5 sm:items-end">
@@ -131,10 +132,10 @@ export default function Users() {
                   <p className="text-xs text-slate-400">Last login: {u.last_sign_in_at ? dateTime(u.last_sign_in_at) : "Never"}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="btn-light" disabled={busy} onClick={() => resetPw(u)}>Change password</button>
+                  {u.role !== "guest" && <button className="btn-light" disabled={busy} onClick={() => resetPw(u)}>Change password</button>}
                   {!locked && (
                     <>
-                      <button
+                      {u.role !== "guest" && <button
                         className="btn-light"
                         disabled={busy}
                         onClick={() =>
@@ -145,7 +146,7 @@ export default function Users() {
                         }
                       >
                         {u.role === "admin" ? "Make user" : "Make admin"}
-                      </button>
+                      </button>}
                       <button
                         className={u.is_active ? "btn-light text-red-600" : "btn-light text-emerald-700"}
                         disabled={busy}

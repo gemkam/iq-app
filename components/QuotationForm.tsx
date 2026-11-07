@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { calcTotals, num } from "@/lib/format";
 import type { Client, Company, DiscountType, Item, Quotation, Unit } from "@/lib/types";
 import Explain, { Calc } from "./Explain";
+import { useMe } from "./AuthGate";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const blankItem = (n: number): Item => ({ sort_order: n, description: "", quantity: 1, unit: "sqm", unit_rate: 0 });
@@ -22,7 +23,9 @@ export default function QuotationForm({
   onSaved?: () => void;
 }) {
   const router = useRouter();
-  const locked = quotation?.status === "converted";
+  const { isGuest } = useMe();
+  const converted = quotation?.status === "converted";
+  const locked = converted || isGuest;
   const [units, setUnits] = useState<Unit[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [saving, setSaving] = useState(false);
@@ -175,7 +178,7 @@ export default function QuotationForm({
 
   return (
     <fieldset disabled={locked || saving} className="space-y-4">
-      {locked && (
+      {converted && (
         <div className="rounded-lg bg-violet-50 p-3 text-sm text-violet-800">
           This quotation has been converted to an invoice, so it is locked.
         </div>
@@ -386,11 +389,6 @@ export default function QuotationForm({
           {(!quotation || quotation.status === "draft") && (
             <button type="button" className="btn-primary" onClick={() => save("submitted")}>
               Save &amp; mark submitted
-            </button>
-          )}
-          {!quotation && (
-            <button type="button" className="btn-accent" onClick={() => save("submitted", true)}>
-              Save &amp; Share
             </button>
           )}
         </div>

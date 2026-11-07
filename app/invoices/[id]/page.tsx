@@ -10,6 +10,7 @@ import History from "@/components/History";
 import Explain, { Calc } from "@/components/Explain";
 import ShareButton from "@/components/ShareButton";
 import Attachments from "@/components/Attachments";
+import { useMe } from "@/components/AuthGate";
 import type { Invoice, Item, Payment } from "@/lib/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -17,6 +18,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default function InvoicePage() {
   const { id } = useParams<{ id: string }>();
   const { company } = useCompany();
+  const { isGuest } = useMe();
   const [inv, setInv] = useState<Invoice | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [pays, setPays] = useState<Payment[]>([]);
@@ -92,7 +94,8 @@ export default function InvoicePage() {
 
   if (!company || !inv) return <p className="text-slate-500">Loading...</p>;
   const isDraft = inv.status === "draft";
-  const canPay = inv.status === "issued" || inv.status === "partially_paid";
+  const canEdit = isDraft && !isGuest;
+  const canPay = !isGuest && (inv.status === "issued" || inv.status === "partially_paid");
 
   return (
     <div className="space-y-4">
@@ -122,7 +125,7 @@ export default function InvoicePage() {
             disabledReason={isDraft ? "Issue the invoice first. Draft invoices cannot be shared." : undefined}
           />
           <Link href={`/invoices/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
-          {isDraft && (
+          {canEdit && (
             <>
               <button className="btn-primary" disabled={busy} onClick={issue}>Issue invoice</button>
               <button className="btn-light text-red-600" onClick={cancelDraft}>Cancel draft</button>
@@ -160,7 +163,7 @@ export default function InvoicePage() {
         <Info k="Invoice date" v={date(inv.issue_date)} />
         <div>
           <span className="lbl">Due date</span>
-          {isDraft ? (
+          {canEdit ? (
             <input key={ver} className="input" type="date" defaultValue={inv.due_date || ""} onBlur={(e) => setDue(e.target.value)} />
           ) : (
             <span className="font-medium">{date(inv.due_date) || "-"}</span>
@@ -221,7 +224,7 @@ export default function InvoicePage() {
               <div>
                 <b>{money(p.amount)}</b> · {date(p.paid_on)} · {label(p.method || "")} {p.reference && `· ${p.reference}`}
               </div>
-              <button className="text-xs text-red-600" onClick={() => removePayment(p.id)}>Delete</button>
+              {!isGuest && <button className="text-xs text-red-600" onClick={() => removePayment(p.id)}>Delete</button>}
             </div>
           ))}
           {canPay && (

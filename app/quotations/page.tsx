@@ -6,12 +6,14 @@ import { useCompany } from "@/lib/useCompany";
 import { date, money } from "@/lib/format";
 import Badge from "@/components/Badge";
 import Explain from "@/components/Explain";
+import { useMe } from "@/components/AuthGate";
 import type { Quotation } from "@/lib/types";
 
 const FILTERS = ["all", "draft", "submitted", "approved", "converted", "rejected"];
 
 export default function Quotations() {
   const { company } = useCompany();
+  const { isGuest } = useMe();
   const [rows, setRows] = useState<Quotation[]>([]);
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
@@ -40,7 +42,7 @@ export default function Quotations() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Quotations</h1>
-        <Link href="/quotations/new" className="btn-primary">+ New Quotation</Link>
+        {!isGuest && <Link href="/quotations/new" className="btn-primary">+ New Quotation</Link>}
       </div>
       <Explain title="Quotation statuses">
         <p><b>Draft:</b> still being prepared. <b>Submitted:</b> sent to the client. <b>Approved / Rejected:</b> the client&apos;s answer.</p>

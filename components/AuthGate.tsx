@@ -7,13 +7,13 @@ import { supabase } from "@/lib/supabase";
 export type Me = {
   user_id: string;
   company_id: string;
-  role: "owner" | "admin" | "staff";
+  role: "owner" | "admin" | "staff" | "guest";
   full_name: string | null;
   username: string | null;
 };
 
-type Ctx = { me: Me | null; isAdmin: boolean; refresh: () => void };
-const AuthCtx = createContext<Ctx>({ me: null, isAdmin: false, refresh: () => {} });
+type Ctx = { me: Me | null; isAdmin: boolean; isGuest: boolean; refresh: () => void };
+const AuthCtx = createContext<Ctx>({ me: null, isAdmin: false, isGuest: false, refresh: () => {} });
 export const useMe = () => useContext(AuthCtx);
 
 const PUBLIC = ["/login", "/setup"];
@@ -74,7 +74,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     );
 
   return (
-    <AuthCtx.Provider value={{ me, isAdmin: me?.role === "owner" || me?.role === "admin", refresh: () => session && loadMe(session.user.id) }}>
+    <AuthCtx.Provider value={{ me, isAdmin: me?.role === "owner" || me?.role === "admin", isGuest: me?.role === "guest", refresh: () => session && loadMe(session.user.id) }}>
       {children}
     </AuthCtx.Provider>
   );

@@ -7,7 +7,7 @@ import { useHelp } from "./Explain";
 
 export default function Nav() {
   const path = usePathname();
-  const { me, isAdmin } = useMe();
+  const { me, isAdmin, isGuest } = useMe();
   const [help, toggleHelp] = useHelp();
   if (path.endsWith("/print") || path === "/login" || path === "/setup" || path.startsWith("/share/")) return null;
 
@@ -58,6 +58,11 @@ export default function Nav() {
           </button>
         </div>
       </div>
+      {isGuest && (
+        <div className="bg-amber-400 py-1 text-center text-xs font-semibold text-amber-950">
+          Guest view: you can look around but cannot make changes
+        </div>
+      )}
     </header>
   );
 }

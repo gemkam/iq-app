@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
 import { money } from "@/lib/format";
 import Explain from "@/components/Explain";
+import { useMe } from "@/components/AuthGate";
 
 type Summary = {
   quotations_submitted: number;
@@ -19,6 +20,7 @@ type Rec = { client_id: string | null; client_name: string | null; open_invoices
 
 export default function Dashboard() {
   const { company, error } = useCompany();
+  const { isGuest } = useMe();
   const [s, setS] = useState<Summary | null>(null);
   const [rec, setRec] = useState<Rec[]>([]);
   const [counts, setCounts] = useState({ q: 0, i: 0 });
@@ -72,7 +74,7 @@ export default function Dashboard() {
         <p>5. This dashboard shows totals and who still owes money.</p>
       </Explain>
 
-      <Link href="/quotations/new" className="btn-primary w-full py-3 text-base sm:w-auto">+ New Quotation</Link>
+      {!isGuest && <Link href="/quotations/new" className="btn-primary w-full py-3 text-base sm:w-auto">+ New Quotation</Link>}
 
       <section>
         <h2 className="mb-3 text-lg font-bold">Reports</h2>

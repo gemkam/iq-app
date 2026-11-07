@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { dateTime } from "@/lib/format";
 import Explain from "./Explain";
+import { useMe } from "./AuthGate";
 import { ACCEPT, fileSize as size, uploadFiles } from "@/lib/attachments";
 
 type Att = {
@@ -36,6 +37,7 @@ export default function Attachments({
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const { isGuest } = useMe();
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +100,7 @@ export default function Attachments({
     <div className="card no-print space-y-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-bold">Attachments {items.length > 0 && <span className="text-slate-400">({items.length})</span>}</h3>
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${isGuest ? "hidden" : ""}`}>
           <button className="btn-light" disabled={busy} onClick={() => camRef.current?.click()}>📷 Take photo</button>
           <button className="btn-primary" disabled={busy} onClick={() => fileRef.current?.click()}>
             {busy ? "Uploading..." : "⬆ Upload files"}
@@ -134,7 +136,7 @@ export default function Attachments({
                 <p className="text-[11px] text-slate-400">{size(a.size_bytes)} · {dateTime(a.created_at)}</p>
                 <div className="flex justify-between text-xs">
                   <button className="text-sky-700" onClick={() => shareFile(a)}>Share</button>
-                  <button className="text-red-600" onClick={() => remove(a)}>Delete</button>
+                  {!isGuest && <button className="text-red-600" onClick={() => remove(a)}>Delete</button>}
                 </div>
               </div>
             </div>

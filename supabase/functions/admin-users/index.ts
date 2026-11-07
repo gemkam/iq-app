@@ -1,5 +1,5 @@
 // Admin user management for IQ. Runs on Supabase Edge Functions with the service role key.
-// Actions: status, bootstrap, list, create, reset_password, set_active, set_role
+// Actions: status, bootstrap, guest_login, list, create, reset_password, set_active, set_role
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -27,6 +27,9 @@ async function firstCompanyId(): Promise<string | null> {
 const DOMAIN = "iq.local";
 const toEmail = (u: string) => `${u}@${DOMAIN}`;
 const toPassword = (p: string) => `IQ::${p}`;
+// Read-only guest account. The password is public on purpose: the guest role can only view.
+const GUEST_USERNAME = "guest";
+const GUEST_PASSWORD = "guest-view";
 
 function cleanUsername(u: unknown): string | null {
   const v = String(u || "").trim().toLowerCase();
@@ -85,6 +88,34 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    // ---------- Guest: make sure the read-only guest account exists ----------
+    if (action === "guest_login") {
+      const cid = await firstCompanyId();
+      if (!cid) return json({ error: "No company set up" }, 500);
+      const { count: owners } = await admin
+        .from("company_members").select("user_id", { count: "exact", head: true })
+        .eq("company_id", cid).neq("role", "guest");
+      if (!owners) return json({ error: "The app is not set up yet." }, 400);
+
+      const { data: g } = await admin.from("company_members").select("user_id, is_active")
+        .eq("company_id", cid).eq("role", "guest").maybeSingle();
+      if (g && !g.is_active) return json({ error: "Guest access is turned off." }, 403);
+      if (!g) {
+        const { data: created, error } = await admin.auth.admin.createUser({
+          email: toEmail(GUEST_USERNAME),
+          password: toPassword(GUEST_PASSWORD),
+          email_confirm: true,
+          user_metadata: { full_name: "Guest" },
+        });
+        if (error) return json({ error: error.message }, 400);
+        await admin.from("company_members").insert({
+          company_id: cid, user_id: created.user.id, role: "guest",
+          email: toEmail(GUEST_USERNAME), username: GUEST_USERNAME, full_name: "Guest (view only)",
+        });
+      }
+      return json({ ok: true });
+    }
+
     // ---------- Admin only ----------
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return json({ error: "Not logged in" }, 401);
@@ -130,6 +161,7 @@ Deno.serve(async (req) => {
       if (!username) return json({ error: "Username: 3 to 30 letters or numbers, no spaces." }, 400);
       if (!full_name) return json({ error: "Name is required." }, 400);
       if (pErr) return json({ error: pErr }, 400);
+      if (username === GUEST_USERNAME) return json({ error: "The username 'guest' is reserved." }, 400);
       const email = toEmail(username);
 
       const { data: created, error } = await admin.auth.admin.createUser({
@@ -159,6 +191,7 @@ Deno.serve(async (req) => {
     if (action === "reset_password") {
       const pErr = checkPassword(body.password);
       if (pErr) return json({ error: pErr }, 400);
+      if (target.role === "guest") return json({ error: "The guest password is fixed. Use Disable to turn guest access off." }, 400);
       if (target.role === "owner" && myRow.role !== "owner") return json({ error: "Only the owner can change the owner's password." }, 403);
       const { error } = await admin.auth.admin.updateUserById(uid, { password: toPassword(String(body.password)) });
       if (error) return json({ error: error.message }, 400);
@@ -178,6 +211,7 @@ Deno.serve(async (req) => {
     if (action === "set_role") {
       if (uid === me.id) return json({ error: "You cannot change your own role." }, 400);
       if (target.role === "owner") return json({ error: "The owner's role cannot be changed." }, 400);
+      if (target.role === "guest") return json({ error: "The guest account is always view only." }, 400);
       const role = body.role === "admin" ? "admin" : "staff";
       await admin.from("company_members").update({ role }).eq("company_id", cid).eq("user_id", uid);
       return json({ ok: true });

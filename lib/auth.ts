@@ -15,6 +15,12 @@ export async function login(username: string, password: string) {
   }
 }
 
+// Read-only guest access (must match the server function)
+export async function guestLogin() {
+  await adminCall("guest_login");
+  await login("guest", "guest-view");
+}
+
 export async function logout() {
   await supabase.auth.signOut();
 }
