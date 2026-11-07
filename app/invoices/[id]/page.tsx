@@ -7,6 +7,7 @@ import { useCompany } from "@/lib/useCompany";
 import { date, label, money, num } from "@/lib/format";
 import Badge from "@/components/Badge";
 import History from "@/components/History";
+import Explain, { Calc } from "@/components/Explain";
 import type { Invoice, Item, Payment } from "@/lib/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -127,6 +128,14 @@ export default function InvoicePage() {
       )}
       {err && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{err}</p>}
 
+      <Explain title="How this invoice is calculated">
+        <Calc label="Subtotal" formula="sum of line amounts" result={num(inv.subtotal)} />
+        <Calc label={`VAT ${Number(inv.vat_rate)}%`} formula={`${num(inv.subtotal)} × ${Number(inv.vat_rate)}%`} result={num(inv.vat_amount)} />
+        <Calc label="Total" formula={`${num(inv.subtotal)} + ${num(inv.vat_amount)}`} result={num(inv.total)} />
+        <Calc label="Balance" formula={`${num(inv.total)} − ${num(inv.amount_paid)} received`} result={num(inv.balance)} />
+        <p className="pt-1">Status changes by itself: Issued → Partially paid (some money received) → Paid (balance zero).</p>
+      </Explain>
+
       <div className="grid gap-4 md:grid-cols-3">
         <Box k="Total" v={money(inv.total)} />
         <Box k="Received" v={money(inv.amount_paid)} tone="text-emerald-700" />
@@ -193,6 +202,9 @@ export default function InvoicePage() {
       {!isDraft && (
         <div className="card space-y-3 p-4">
           <h3 className="font-bold">Payments</h3>
+          <Explain>
+            <p>Record each payment when it arrives (full or part). The app adds them up and reduces the balance. You cannot record more than the balance.</p>
+          </Explain>
           {pays.length === 0 && <p className="text-sm text-slate-500">No payments yet.</p>}
           {pays.map((p) => (
             <div key={p.id} className="flex items-center justify-between border-t border-slate-100 pt-2 text-sm">

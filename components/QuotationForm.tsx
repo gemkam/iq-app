@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { calcTotals, num } from "@/lib/format";
 import type { Client, Company, DiscountType, Item, Quotation, Unit } from "@/lib/types";
+import Explain, { Calc } from "./Explain";
 
 const today = () => new Date().toISOString().slice(0, 10);
 const blankItem = (n: number): Item => ({ sort_order: n, description: "", quantity: 1, unit: "sqm", unit_rate: 0 });
@@ -185,6 +186,10 @@ export default function QuotationForm({
 
       <div className="card p-4">
         <h3 className="mb-3 font-bold">Items</h3>
+        <Explain className="mb-3">
+          <p>Each line: <b>Amount = Quantity × Unit rate</b>. Example: 30 sqm × 20.000 = 600.000.</p>
+          <p>Pick the unit (Square Meter, Cubic Meter, Days...). For <b>Lump Sum</b> the quantity is fixed at 1, so the rate is the full price of that line.</p>
+        </Explain>
         <div className="hidden grid-cols-[40px_1fr_90px_130px_110px_110px_32px] gap-2 px-1 pb-1 text-xs font-semibold uppercase text-slate-500 md:grid">
           <span>S.No</span>
           <span>Description</span>
@@ -246,6 +251,11 @@ export default function QuotationForm({
                 <div className="text-right">
                   <span className="lbl md:hidden">Amount</span>
                   <span className="font-semibold">{num(amount)}</span>
+                  {Number(it.unit_rate) > 0 && (
+                    <span className="block text-[11px] text-slate-400">
+                      {ls ? "Lump sum" : `${Number(it.quantity) || 0} × ${num(it.unit_rate)}`}
+                    </span>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -310,6 +320,17 @@ export default function QuotationForm({
             <span>Total ({company.currency})</span>
             <span>{num(t.total)}</span>
           </div>
+          <Explain title="How the total is calculated" className="mt-3">
+            <Calc label="Subtotal" formula="sum of all line amounts" result={num(t.subtotal)} />
+            {f.discount_type === "amount" && <Calc label="Discount" formula="fixed amount" result={`− ${num(t.discount)}`} />}
+            {f.discount_type === "percent" && (
+              <Calc label="Discount" formula={`${num(t.subtotal)} × ${Number(f.discount_value) || 0}%`} result={`− ${num(t.discount)}`} />
+            )}
+            <Calc label="After discount" formula={`${num(t.subtotal)} − ${num(t.discount)}`} result={num(t.net)} />
+            <Calc label={`VAT ${vatRate}%`} formula={`${num(t.net)} × ${vatRate}%`} result={num(t.vat)} />
+            <Calc label="Total" formula={`${num(t.net)} + ${num(t.vat)}`} result={num(t.total)} />
+            <p className="pt-1 text-xs">VAT is charged on the amount after discount. Tip: if the client agrees a lower price, put the difference as a fixed discount (quoted 1,000, agreed 800 → discount 200).</p>
+          </Explain>
         </div>
       </div>
 

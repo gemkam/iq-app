@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
 import { date, money } from "@/lib/format";
 import Badge from "@/components/Badge";
+import Explain from "@/components/Explain";
 import type { Quotation } from "@/lib/types";
 
 const FILTERS = ["all", "draft", "submitted", "approved", "converted", "rejected"];
@@ -41,6 +42,10 @@ export default function Quotations() {
         <h1 className="text-2xl font-bold">Quotations</h1>
         <Link href="/quotations/new" className="btn-primary">+ New Quotation</Link>
       </div>
+      <Explain title="Quotation statuses">
+        <p><b>Draft:</b> still being prepared. <b>Submitted:</b> sent to the client. <b>Approved / Rejected:</b> the client&apos;s answer.</p>
+        <p><b>Converted:</b> an invoice was made from it, so it is locked. Numbers go Q-1001, Q-1002 and so on automatically.</p>
+      </Explain>
       <div className="flex flex-col gap-3 sm:flex-row">
         <input className="input sm:max-w-xs" placeholder="Search company, project, code..." value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="flex gap-1 overflow-x-auto">

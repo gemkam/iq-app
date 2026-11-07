@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
 import { money } from "@/lib/format";
+import Explain from "@/components/Explain";
 
 type Summary = {
   quotations_submitted: number;
@@ -63,10 +64,24 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      <Explain title="How the app flows">
+        <p>1. Create a <b>Quotation</b> for a client (items, quantities, rates, discount, VAT).</p>
+        <p>2. Mark it <b>Submitted</b> when sent, then <b>Approved</b> or <b>Rejected</b> when the client replies.</p>
+        <p>3. Use <b>Convert to Invoice</b> to bill the full amount, or bill in parts (advance, milestones, final).</p>
+        <p>4. <b>Issue</b> the invoice, then <b>Record payment</b> when money comes in. The balance updates by itself.</p>
+        <p>5. This dashboard shows totals and who still owes money.</p>
+      </Explain>
+
       <Link href="/quotations/new" className="btn-primary w-full py-3 text-base sm:w-auto">+ New Quotation</Link>
 
       <section>
         <h2 className="mb-3 text-lg font-bold">Reports</h2>
+        <Explain title="What these numbers mean" className="mb-3">
+          <p><b>Quotations submitted:</b> every quotation that is not a draft (submitted, approved, rejected or converted), and their total value incl. VAT.</p>
+          <p><b>Approved:</b> quotations the client accepted (approved + converted to invoice).</p>
+          <p><b>Invoices issued:</b> invoices sent to clients (drafts and cancelled ones are not counted).</p>
+          <p><b>Receivable</b> = total of issued invoices − payments received. This is the money still to collect.</p>
+        </Explain>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat title="Quotations submitted" value={String(s?.quotations_submitted ?? 0)} sub={money(s?.quotations_value)} />
           <Stat title="Approved" value={String(s?.quotations_approved ?? 0)} sub={money(s?.approved_value)} />
@@ -77,6 +92,9 @@ export default function Dashboard() {
 
       <section className="card overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-3 font-bold">Receivables by company</div>
+        <Explain className="m-3">
+          <p>For each client: <b>Invoiced</b> (all issued invoices incl. VAT) − <b>Received</b> (payments recorded) = <b>Balance</b> still owed.</p>
+        </Explain>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px]">
             <thead className="bg-slate-50">

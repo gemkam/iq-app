@@ -8,6 +8,7 @@ import { date, label, money, num, round3 } from "@/lib/format";
 import Badge from "@/components/Badge";
 import History from "@/components/History";
 import QuotationForm from "@/components/QuotationForm";
+import Explain, { Calc } from "@/components/Explain";
 import type { Invoice, Item, Quotation } from "@/lib/types";
 
 export default function QuotationPage() {
@@ -74,6 +75,12 @@ export default function QuotationPage() {
         </div>
       </div>
       {msg && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{msg}</p>}
+
+      <Explain title="What you can do here">
+        <p>Edit the quotation and press <b>Save changes</b>. Every change is kept in the <b>Change history</b> at the bottom.</p>
+        <p>Use the buttons above to mark it Submitted, Approved or Rejected. <b>Print / PDF</b> opens a printable page (choose &quot;Save as PDF&quot; in the print window).</p>
+        <p>When the client agrees, use <b>Convert to Invoice</b> below. After that the quotation is locked.</p>
+      </Explain>
 
       <QuotationForm key={ver} company={company} quotation={q} initialItems={items} onSaved={load} />
 
@@ -162,6 +169,13 @@ function ConvertPanel({
   return (
     <div className="card space-y-3 border-2 p-4" style={{ borderColor: "var(--accent)" }}>
       <h3 className="text-lg font-bold">Convert to Invoice</h3>
+      <Explain>
+        <p>Amounts here are <b>before VAT</b>. VAT is added on each invoice.</p>
+        <Calc label="Remaining" formula={`${num(net)} (quotation after discount) − ${num(invoicedNet)} (already invoiced)`} result={num(remaining)} />
+        <p><b>Full amount:</b> one invoice for everything left. <b>Part amount:</b> bill an advance or milestone now and the rest later.</p>
+        <p>Numbering: the first invoice of this job gets a new number (e.g. 1001). Later invoices for the same job become 1001-1, 1001-2 and so on.</p>
+        <p>You cannot invoice more than the quotation. The app blocks it.</p>
+      </Explain>
       <div className="grid grid-cols-3 gap-2 text-center text-sm">
         <div className="rounded-lg bg-slate-50 p-2">
           <div className="text-xs text-slate-500">Quotation (before VAT)</div>

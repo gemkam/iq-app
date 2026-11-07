@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
 import { date, label, money, num } from "@/lib/format";
 import Badge from "@/components/Badge";
+import Explain from "@/components/Explain";
 import type { Invoice } from "@/lib/types";
 
 const FILTERS = ["all", "draft", "issued", "partially_paid", "paid", "cancelled"];
@@ -45,7 +46,11 @@ export default function Invoices() {
           <div className="text-lg font-bold text-red-600">{money(outstanding)}</div>
         </div>
       </div>
-      <p className="text-sm text-slate-500">Invoices are created from a quotation using Convert to Invoice.</p>
+      <Explain title="Invoices">
+        <p>Invoices are made from a quotation using <b>Convert to Invoice</b>. One job can have several invoices: 1001 (advance), 1001-1 (milestone), 1001-2 (final).</p>
+        <p><b>Draft:</b> not sent yet, can be cancelled. <b>Issued:</b> sent and locked. <b>Partially paid:</b> some money received. <b>Paid:</b> balance is zero.</p>
+        <p><b>Outstanding</b> (top right) = sum of balances of issued and partially paid invoices in this list.</p>
+      </Explain>
       <div className="flex flex-col gap-3 sm:flex-row">
         <input className="input sm:max-w-xs" placeholder="Search number, company, project..." value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="flex gap-1 overflow-x-auto">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AdminOnly from "@/components/AdminOnly";
 import { adminCall } from "@/lib/auth";
 import { dateTime } from "@/lib/format";
+import Explain from "@/components/Explain";
 
 type U = {
   user_id: string;
@@ -76,6 +77,12 @@ export default function Users() {
           <Link href="/admin" className="text-sm text-slate-500">← Admin</Link>
           <h1 className="text-2xl font-bold">Users</h1>
         </div>
+
+        <Explain title="Users">
+          <p>Create a login for each tester. Give them the <b>username</b> and <b>password</b> shown in the green message.</p>
+          <p><b>Disable</b> stops a user from logging in (their work stays). <b>Change password</b> sets a new one.</p>
+          <p>Every change in quotations and invoices shows <b>who</b> made it in the Change history.</p>
+        </Explain>
 
         <form onSubmit={create} className="card grid gap-3 p-4 sm:grid-cols-5 sm:items-end">
           <div className="sm:col-span-5 font-bold">Create user</div>
