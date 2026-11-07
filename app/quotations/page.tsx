@@ -6,6 +6,7 @@ import { useCompany } from "@/lib/useCompany";
 import { date, money } from "@/lib/format";
 import Badge from "@/components/Badge";
 import Explain from "@/components/Explain";
+import ShareButton from "@/components/ShareButton";
 import { useMe } from "@/components/AuthGate";
 import type { Quotation } from "@/lib/types";
 
@@ -67,8 +68,8 @@ export default function Quotations() {
         {loading && <p className="text-slate-500">Loading...</p>}
         {!loading && shown.length === 0 && <div className="card p-6 text-center text-slate-500">No quotations yet.</div>}
         {shown.map((r) => (
-          <Link key={r.id} href={`/quotations/${r.id}`} className="card flex flex-wrap items-center justify-between gap-3 p-4 hover:shadow-md">
-            <div className="min-w-0">
+          <div key={r.id} className="card flex flex-wrap items-center justify-between gap-3 p-4 hover:shadow-md">
+            <Link href={`/quotations/${r.id}`} className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-bold">{r.code}</span>
                 <Badge status={r.status} />
@@ -77,9 +78,10 @@ export default function Quotations() {
               <p className="truncate text-sm text-slate-500">
                 {r.project_name || "-"} {r.project_code ? `(${r.project_code})` : ""} · {date(r.quote_date)}
               </p>
-            </div>
-            <p className="text-lg font-bold">{money(r.total)}</p>
-          </Link>
+              <p className="mt-1 text-lg font-bold">{money(r.total)}</p>
+            </Link>
+            <ShareButton token={r.share_token} title={`Quotation ${r.code}`} clientName={r.clients?.name} total={r.total} mobile={r.mobile} />
+          </div>
         ))}
       </div>
     </div>

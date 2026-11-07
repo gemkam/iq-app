@@ -6,6 +6,7 @@ import { useCompany } from "@/lib/useCompany";
 import { date, label, money, num } from "@/lib/format";
 import Badge from "@/components/Badge";
 import Explain from "@/components/Explain";
+import ShareButton from "@/components/ShareButton";
 import type { Invoice } from "@/lib/types";
 
 const FILTERS = ["all", "draft", "issued", "partially_paid", "paid", "cancelled"];
@@ -21,7 +22,7 @@ export default function Invoices() {
     if (!company) return;
     let query = supabase
       .from("invoices")
-      .select("*, clients(name), quotations(code, project_name)")
+      .select("*, clients(name), quotations(code, project_name, mobile)")
       .eq("company_id", company.id)
       .order("base_no", { ascending: false })
       .order("seq", { ascending: true });
@@ -70,8 +71,8 @@ export default function Invoices() {
         {loading && <p className="text-slate-500">Loading...</p>}
         {!loading && shown.length === 0 && <div className="card p-6 text-center text-slate-500">No invoices yet.</div>}
         {shown.map((r) => (
-          <Link key={r.id} href={`/invoices/${r.id}`} className="card flex flex-wrap items-center justify-between gap-3 p-4 hover:shadow-md">
-            <div className="min-w-0">
+          <div key={r.id} className="card flex flex-wrap items-center justify-between gap-3 p-4 hover:shadow-md">
+            <Link href={`/invoices/${r.id}`} className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-bold">{r.code}</span>
                 <span className="text-xs text-slate-500">{label(r.kind)}</span>
@@ -81,12 +82,20 @@ export default function Invoices() {
               <p className="truncate text-sm text-slate-500">
                 {r.quotations?.code} {r.quotations?.project_name ? `· ${r.quotations.project_name}` : ""} · {date(r.issue_date)}
               </p>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-bold">{money(r.total)}</p>
-              {Number(r.balance) > 0 && r.status !== "draft" && <p className="text-sm text-red-600">Balance {num(r.balance)}</p>}
-            </div>
-          </Link>
+              <p className="mt-1 text-lg font-bold">
+                {money(r.total)}
+                {Number(r.balance) > 0 && r.status !== "draft" && <span className="ml-2 text-sm font-medium text-red-600">Balance {num(r.balance)}</span>}
+              </p>
+            </Link>
+            <ShareButton
+              token={r.share_token}
+              title={`Invoice ${r.code}`}
+              clientName={r.clients?.name}
+              total={r.total}
+              mobile={r.quotations?.mobile}
+              disabledReason={r.status === "draft" ? "Issue the invoice first. Draft invoices cannot be shared." : undefined}
+            />
+          </div>
         ))}
       </div>
     </div>
