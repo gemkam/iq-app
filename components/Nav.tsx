@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useMe } from "./AuthGate";
 import { logout } from "@/lib/auth";
 import { useHelp } from "./Explain";
+import { ThemeToggle } from "./Theme";
 
 export default function Nav() {
   const path = usePathname();
@@ -58,6 +59,7 @@ export default function Nav() {
           >
             Help {help ? "On" : "Off"}
           </button>
+          <ThemeToggle />
           <button className="rounded-lg border border-white/30 px-2.5 py-1 hover:bg-white/10" onClick={logout}>
             Logout
           </button>
