@@ -14,10 +14,11 @@ export default function Nav() {
   if (path.endsWith("/print") || path === "/login" || path === "/setup" || path.startsWith("/share/")) return null;
 
   const links = [
-    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
     { href: "/", label: "Dashboard" },
     { href: "/quotations", label: "Quotations" },
     { href: "/invoices", label: "Invoices" },
+    { href: "/companies", label: "Companies" },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   const isActive = (href: string) => (href === "/" ? path === "/" : path.startsWith(href) || (href === "/admin" && path.startsWith("/settings")));
@@ -41,7 +42,7 @@ export default function Nav() {
             <Link
               key={l.href}
               href={l.href}
-              className={`relative rounded-lg px-2 py-1.5 text-center whitespace-nowrap md:px-3 ${isActive(l.href) ? "bg-white/10 font-semibold text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
+              className={`relative rounded-lg px-1 py-1.5 text-center text-[12.5px] whitespace-nowrap sm:text-sm md:px-3 ${isActive(l.href) ? "bg-white/10 font-semibold text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
             >
               {l.label}
               {isActive(l.href) && (

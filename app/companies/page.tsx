@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 import { setActiveCompanyId } from "@/lib/activeCompany";
 import { useMe } from "@/components/AuthGate";
 import Explain from "@/components/Explain";
-import AdminOnly from "@/components/AdminOnly";
 
 const blank = { name: "", cr_number: "", vatin: "", phone: "", email: "", address: "", vat_registered: false };
 
@@ -15,8 +14,6 @@ export default function Companies() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
-
-  if (!canCreateCompany) return <div className="card p-6 text-center text-slate-500">Only owners and admins can manage companies.</div>;
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,17 +40,23 @@ export default function Companies() {
   };
 
   return (
-    <AdminOnly>
     <div className="space-y-4">
-      <div>
-        <Link href="/admin" className="text-sm text-slate-500">← Admin</Link>
-        <h1 className="text-2xl font-bold">Companies</h1>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Companies</h1>
+          <p className="text-sm text-slate-500">
+            {memberships.length} {memberships.length === 1 ? "company" : "companies"} under your name
+          </p>
+        </div>
+        {canCreateCompany && (
+          <a href="#new-company" className="btn-accent">+ Add company</a>
+        )}
       </div>
 
       <Explain title="Several companies under one login">
         <p>Each company is completely separate: its own clients, quotations (Q-1001, Q-1002...), invoices (1001, 1001-1...), users, logo, CR and VAT details.</p>
         <p>Use the company name at the top left to switch between companies. Everything you see and create belongs to the selected company.</p>
-        <p>To give a person access to more than one company, open Users in each company and use <b>Add existing user</b>.</p>
+        <p>Add as many companies as you need under your name. To give another person access to more than one company, open Admin → Users in each company and use <b>Add existing user</b>.</p>
       </Explain>
 
       <div className="space-y-2">
@@ -77,7 +80,7 @@ export default function Companies() {
               </div>
               <div className="flex gap-2">
                 {active ? (
-                  <Link href="/settings" className="btn-light">Edit details</Link>
+                  (m.role === "owner" || m.role === "admin") && <Link href="/settings" className="btn-light">Edit details</Link>
                 ) : (
                   <button className="btn-primary" onClick={() => switchCompany(m.company_id)}>Switch to this company</button>
                 )}
@@ -87,7 +90,8 @@ export default function Companies() {
         })}
       </div>
 
-      <form onSubmit={create} className="card grid gap-3 p-4 sm:grid-cols-2">
+      {canCreateCompany ? (
+      <form id="new-company" onSubmit={create} className="card grid gap-3 scroll-mt-28 p-4 sm:grid-cols-2">
         <h2 className="text-lg font-bold sm:col-span-2">+ Add a new company</h2>
         <div className="sm:col-span-2">
           <label className="lbl">Company name *</label>
@@ -123,7 +127,9 @@ export default function Companies() {
           <button className="btn-accent" disabled={busy}>{busy ? "Creating..." : "Create company"}</button>
         </div>
       </form>
+      ) : (
+        <p className="card p-4 text-sm text-slate-500">Only owners and admins can add new companies.</p>
+      )}
     </div>
-    </AdminOnly>
   );
 }
