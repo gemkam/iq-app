@@ -40,3 +40,7 @@ export const statusColor: Record<string, string> = {
 };
 
 export const label = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+// Role names shown in the app
+export const roleLabel = (r: string) =>
+  ({ admin: "Administrator", owner: "Company owner", staff: "User", guest: "Guest (view only)" } as Record<string, string>)[r] || r;

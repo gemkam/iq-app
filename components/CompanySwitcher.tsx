@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMe } from "./AuthGate";
+import { roleLabel } from "@/lib/format";
 
 // Shows the selected company and lets the person switch between their companies
 export default function CompanySwitcher() {
@@ -45,7 +46,7 @@ export default function CompanySwitcher() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold">{m.company_name}</span>
-                      <span className="block text-xs capitalize text-white/50">{m.role === "staff" ? "user" : m.role}</span>
+                      <span className="block text-xs text-white/50">{roleLabel(m.role)}</span>
                     </span>
                     {active && <span className="text-cyan-300">✓</span>}
                   </button>

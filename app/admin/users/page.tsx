@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AdminOnly from "@/components/AdminOnly";
 import { adminCall } from "@/lib/auth";
-import { dateTime } from "@/lib/format";
+import { dateTime, roleLabel } from "@/lib/format";
 import Explain from "@/components/Explain";
 import { useMe } from "@/components/AuthGate";
 
@@ -17,7 +17,6 @@ type U = {
   last_sign_in_at: string | null;
 };
 
-const roleName = { owner: "Owner", admin: "Admin", staff: "User", guest: "Guest (view only)" };
 
 export default function Users() {
   const [users, setUsers] = useState<U[]>([]);
@@ -25,8 +24,8 @@ export default function Users() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [f, setF] = useState({ full_name: "", username: "", password: "1234", role: "staff" });
-  const [ex, setEx] = useState({ username: "", role: "staff" });
+  const [f, setF] = useState({ full_name: "", username: "", password: "1234", role: "owner" });
+  const [ex, setEx] = useState({ username: "", role: "owner" });
   const { me } = useMe();
 
   const load = async () => {
@@ -63,7 +62,7 @@ export default function Users() {
     const uname = f.username.trim().toLowerCase();
     run(async () => {
       await adminCall("create", { ...f, username: uname });
-      setF({ full_name: "", username: "", password: "1234", role: "staff" });
+      setF({ full_name: "", username: "", password: "1234", role: "owner" });
     }, `User "${uname}" created. Password: ${f.password}`);
   };
 
@@ -83,7 +82,8 @@ export default function Users() {
         </div>
 
         <Explain title="Users">
-          <p>Create a login for each tester. Give them the <b>username</b> and <b>password</b> shown in the green message.</p>
+          <p><b>Company owner:</b> full access to quotations, invoices and payments of the companies you give them. They do not see Admin. <b>Administrator:</b> everything, including Admin.</p>
+          <p>Give each person the <b>username</b> and <b>password</b> shown in the green message.</p>
           <p>Users belong to the company selected at the top. <b>Disable</b> removes their access to this company (their work stays). <b>Change password</b> sets a new one for all their companies.</p>
           <p>Every change in quotations and invoices shows <b>who</b> made it in the Change history.</p>
           <p><b>Guest:</b> anyone can tap &quot;Continue as Guest&quot; on the login page to view the app without changing anything. The Guest account appears here after the first guest visit. Disable it to turn guest access off.</p>
@@ -106,13 +106,13 @@ export default function Users() {
           <div>
             <label className="lbl">Role</label>
             <select className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>
-              <option value="staff">User</option>
-              <option value="admin">Admin</option>
+              <option value="owner">Company owner</option>
+              <option value="admin">Administrator</option>
             </select>
           </div>
           <button className="btn-primary" disabled={busy || !f.full_name || !f.username || !f.password}>+ Create user</button>
           <p className="text-xs text-slate-500 sm:col-span-5">
-            User: quotations, invoices and payments. Admin: also manages users and company settings.
+            Company owner: full quotations, invoices and payments for this company. Administrator: also the Admin tab (users, settings, new companies).
           </p>
         </form>
 
@@ -122,7 +122,7 @@ export default function Users() {
             const uname = ex.username.trim().toLowerCase();
             run(async () => {
               await adminCall("add_member", { username: uname, role: ex.role });
-              setEx({ username: "", role: "staff" });
+              setEx({ username: "", role: "owner" });
             }, `${uname} can now use ${me?.company_name} with the same username and password.`);
           }}
           className="card grid gap-3 p-4 sm:grid-cols-4 sm:items-end"
@@ -135,8 +135,8 @@ export default function Users() {
           <div>
             <label className="lbl">Role</label>
             <select className="input" value={ex.role} onChange={(e) => setEx({ ...ex, role: e.target.value })}>
-              <option value="staff">User</option>
-              <option value="admin">Admin</option>
+              <option value="owner">Company owner</option>
+              <option value="admin">Administrator</option>
             </select>
           </div>
           <button className="btn-light" disabled={busy || !ex.username}>Add to company</button>
@@ -148,13 +148,13 @@ export default function Users() {
         <div className="space-y-2">
           {users.map((u) => {
             const isMe = u.user_id === meId;
-            const locked = isMe || u.role === "owner";
+            const locked = isMe;
             return (
               <div key={u.user_id} className={`card flex flex-wrap items-center justify-between gap-3 p-4 ${u.is_active ? "" : "opacity-60"}`}>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold">{u.full_name}</span>
-                    <span className="badge bg-slate-100 text-slate-700">{roleName[u.role]}</span>
+                    <span className="badge bg-slate-100 text-slate-700">{roleLabel(u.role)}</span>
                     {!u.is_active && <span className="badge bg-red-100 text-red-700">Disabled</span>}
                     {isMe && <span className="badge bg-sky-100 text-sky-700">You</span>}
                   </div>
@@ -170,12 +170,12 @@ export default function Users() {
                         disabled={busy}
                         onClick={() =>
                           run(
-                            () => adminCall("set_role", { user_id: u.user_id, role: u.role === "admin" ? "staff" : "admin" }),
-                            `${u.username} is now ${u.role === "admin" ? "a User" : "an Admin"}`
+                            () => adminCall("set_role", { user_id: u.user_id, role: u.role === "admin" ? "owner" : "admin" }),
+                            `${u.username} is now ${u.role === "admin" ? "a Company owner" : "an Administrator"}`
                           )
                         }
                       >
-                        {u.role === "admin" ? "Make user" : "Make admin"}
+                        {u.role === "admin" ? "Make company owner" : "Make administrator"}
                       </button>}
                       <button
                         className={u.is_active ? "btn-light text-red-600" : "btn-light text-emerald-700"}

@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { adminCall } from "@/lib/auth";
+import { roleLabel } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import { setActiveCompanyId } from "@/lib/activeCompany";
 import { useMe } from "@/components/AuthGate";
@@ -14,12 +16,37 @@ export default function Companies() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  // Who will own the new company
+  const [ownerMode, setOwnerMode] = useState<"me" | "new" | "existing">("me");
+  const [ow, setOw] = useState({ full_name: "", username: "", password: "1234" });
+  // Company owners shown on each company card
+  const [owners, setOwners] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    const ids = memberships.map((m) => m.company_id);
+    if (!ids.length) return;
+    supabase
+      .from("company_members")
+      .select("company_id, full_name, username")
+      .in("company_id", ids)
+      .eq("role", "owner")
+      .eq("is_active", true)
+      .then(({ data }) => {
+        const map: Record<string, string[]> = {};
+        (data || []).forEach((r: { company_id: string; full_name: string | null; username: string | null }) => {
+          (map[r.company_id] ||= []).push(r.full_name || r.username || "");
+        });
+        setOwners(map);
+      });
+  }, [memberships]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
     setOk(null);
     if (!f.name.trim()) return setErr("Company name is required.");
+    if (ownerMode === "new" && (!ow.full_name.trim() || !ow.username.trim() || !ow.password)) return setErr("Enter the owner's name, username and password.");
+    if (ownerMode === "existing" && !ow.username.trim()) return setErr("Enter the owner's username.");
     setBusy(true);
     const { data, error } = await supabase.rpc("create_company", {
       p_name: f.name.trim(),
@@ -30,10 +57,29 @@ export default function Companies() {
       p_address: f.address || null,
       p_vat_registered: f.vat_registered,
     });
+    if (error) {
+      setBusy(false);
+      return setErr(error.message);
+    }
+    const cid = data as string;
+    const uname = ow.username.trim().toLowerCase();
+    let msg = `"${f.name.trim()}" created.`;
+    try {
+      if (ownerMode === "new") {
+        await adminCall("create", { company_id: cid, full_name: ow.full_name.trim(), username: uname, password: ow.password, role: "owner" });
+        msg += ` Owner login: username ${uname}, password ${ow.password}`;
+      } else if (ownerMode === "existing") {
+        await adminCall("add_member", { company_id: cid, username: uname, role: "owner" });
+        msg += ` ${uname} is now its company owner.`;
+      }
+    } catch (e2) {
+      msg += ` But the owner could not be added: ${(e2 as Error).message}. Add them in Admin → Users.`;
+    }
     setBusy(false);
-    if (error) return setErr(error.message);
-    setOk(`"${f.name.trim()}" created. You are its owner.`);
+    setOk(msg);
     setF(blank);
+    setOw({ full_name: "", username: "", password: "1234" });
+    setOwnerMode("me");
     // select the new company and reload the list of companies
     setActiveCompanyId(data as string);
     refresh();
@@ -56,7 +102,7 @@ export default function Companies() {
       <Explain title="Several companies under one login">
         <p>Each company is completely separate: its own clients, quotations (Q-1001, Q-1002...), invoices (1001, 1001-1...), users, logo, CR and VAT details.</p>
         <p>Use the company name at the top left to switch between companies. Everything you see and create belongs to the selected company.</p>
-        <p>Add as many companies as you need under your name. To give another person access to more than one company, open Admin → Users in each company and use <b>Add existing user</b>.</p>
+        <p>Administrators can add as many companies as needed and give each one a <b>company owner</b>. The owner works fully in their own companies (quotations, invoices, payments) but does not see Admin. One owner can have several companies.</p>
       </Explain>
 
       <div className="space-y-2">
@@ -73,14 +119,17 @@ export default function Companies() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate font-bold">{m.company_name}</p>
-                  <p className="text-xs capitalize text-slate-500">
-                    Your role: {m.role === "staff" ? "user" : m.role} {active && <span className="font-semibold text-blue-600">· selected</span>}
+                  <p className="text-xs text-slate-500">
+                    You: {roleLabel(m.role)} {active && <span className="font-semibold text-blue-600">· selected</span>}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Company owner: <b>{owners[m.company_id]?.join(", ") || "not assigned"}</b>
                   </p>
                 </div>
               </div>
               <div className="flex gap-2">
                 {active ? (
-                  (m.role === "owner" || m.role === "admin") && <Link href="/settings" className="btn-light">Edit details</Link>
+                  m.role === "admin" && <Link href="/settings" className="btn-light">Edit details</Link>
                 ) : (
                   <button className="btn-primary" onClick={() => switchCompany(m.company_id)}>Switch to this company</button>
                 )}
@@ -121,6 +170,50 @@ export default function Companies() {
           <input type="checkbox" className="h-4 w-4" checked={f.vat_registered} onChange={(e) => setF({ ...f, vat_registered: e.target.checked })} />
           VAT registered (applies 5% VAT and prints TAX INVOICE)
         </label>
+        <div className="space-y-3 rounded-xl border border-slate-200 p-3 sm:col-span-2">
+          <p className="lbl">Company owner</p>
+          <div className="flex flex-wrap gap-2 text-sm">
+            {[
+              ["me", "No owner yet (only me)"],
+              ["new", "Create new owner"],
+              ["existing", "Existing user"],
+            ].map(([k, t]) => (
+              <button
+                type="button"
+                key={k}
+                onClick={() => setOwnerMode(k as typeof ownerMode)}
+                className={`rounded-lg px-3 py-1.5 ${ownerMode === k ? "bg-blue-600 text-white" : "btn-light"}`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          {ownerMode === "new" && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="lbl">Owner name</label>
+                <input className="input" value={ow.full_name} onChange={(e) => setOw({ ...ow, full_name: e.target.value })} placeholder="Ramzan Ali" />
+              </div>
+              <div>
+                <label className="lbl">Username</label>
+                <input className="input" autoCapitalize="none" value={ow.username} onChange={(e) => setOw({ ...ow, username: e.target.value })} placeholder="ramzan" />
+              </div>
+              <div>
+                <label className="lbl">Password</label>
+                <input className="input" value={ow.password} onChange={(e) => setOw({ ...ow, password: e.target.value })} />
+              </div>
+            </div>
+          )}
+          {ownerMode === "existing" && (
+            <div>
+              <label className="lbl">Username of the owner</label>
+              <input className="input" autoCapitalize="none" value={ow.username} onChange={(e) => setOw({ ...ow, username: e.target.value })} placeholder="someone who already has a login" />
+              <p className="mt-1 text-xs text-slate-500">One owner can have several companies. They switch between them at the top left.</p>
+            </div>
+          )}
+          <p className="text-xs text-slate-500">The company owner gets full access to this company&apos;s quotations, invoices and payments. They do not see Admin. You stay administrator of every company.</p>
+        </div>
+
         {err && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{err}</p>}
         {ok && <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800 sm:col-span-2">{ok}</p>}
         <div className="sm:col-span-2">
@@ -128,7 +221,7 @@ export default function Companies() {
         </div>
       </form>
       ) : (
-        <p className="card p-4 text-sm text-slate-500">Only owners and admins can add new companies.</p>
+        <p className="card p-4 text-sm text-slate-500">Only administrators can add new companies.</p>
       )}
     </div>
   );

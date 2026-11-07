@@ -129,7 +129,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       </div>
     );
 
-  const isAdmin = me?.role === "owner" || me?.role === "admin";
+  // Administrator = full control incl. Admin tab. Company owner = full work in own companies.
+  const isAdmin = me?.role === "admin";
   return (
     <AuthCtx.Provider
       value={{
@@ -137,7 +138,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         memberships,
         isAdmin,
         isGuest: me?.role === "guest",
-        canCreateCompany: memberships.some((m) => m.role === "owner" || m.role === "admin"),
+        canCreateCompany: memberships.some((m) => m.role === "admin"),
         switchCompany,
         refresh: () => session && loadMe(session.user.id),
       }}

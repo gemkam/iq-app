@@ -1,5 +1,6 @@
 // Admin user management for IQ. Runs on Supabase Edge Functions with the service role key.
 // Actions: status, bootstrap, guest_login, list, create, add_member, reset_password, set_active, set_role
+// Roles: admin = Administrator, owner = Company owner, staff = User, guest = view only
 // Admin actions work on the company passed as body.company_id (the company selected in the app).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -36,6 +37,9 @@ function cleanUsername(u: unknown): string | null {
   const v = String(u || "").trim().toLowerCase();
   return /^[a-z0-9._-]{3,30}$/.test(v) ? v : null;
 }
+
+// admin = Administrator, owner = Company owner, staff = User
+const pickRole = (r: unknown) => (r === "admin" ? "admin" : r === "owner" ? "owner" : "staff");
 
 function checkPassword(p: unknown): string | null {
   if (typeof p !== "string" || p.length < 4) return "Password must be at least 4 characters.";
@@ -91,7 +95,7 @@ Deno.serve(async (req) => {
       if (error) return json({ error: error.message }, 400);
       const { error: mErr } = await admin
         .from("company_members")
-        .insert({ company_id: cid, user_id: created.user.id, role: "owner", email, username, full_name });
+        .insert({ company_id: cid, user_id: created.user.id, role: "admin", email, username, full_name });
       if (mErr) {
         await admin.auth.admin.deleteUser(created.user.id);
         return json({ error: mErr.message }, 500);
@@ -153,7 +157,7 @@ Deno.serve(async (req) => {
     let q = admin.from("company_members").select("company_id, role, is_active").eq("user_id", me.id).eq("is_active", true);
     if (body.company_id) q = q.eq("company_id", String(body.company_id));
     const { data: myRow } = await q.order("created_at").limit(1).maybeSingle();
-    if (!myRow || !["owner", "admin"].includes(myRow.role)) return json({ error: "Only admins of this company can manage users." }, 403);
+    if (!myRow || myRow.role !== "admin") return json({ error: "Only administrators can manage users." }, 403);
     const cid = myRow.company_id as string;
 
     const getTarget = async (uid: string) => {
@@ -179,7 +183,7 @@ Deno.serve(async (req) => {
     if (action === "create") {
       const username = cleanUsername(body.username);
       const full_name = String(body.full_name || "").trim();
-      const role = body.role === "admin" ? "admin" : "staff";
+      const role = pickRole(body.role);
       const pErr = checkPassword(body.password);
       if (!username) return json({ error: "Username: 3 to 30 letters or numbers, no spaces." }, 400);
       if (!full_name) return json({ error: "Name is required." }, 400);
@@ -212,7 +216,7 @@ Deno.serve(async (req) => {
     // Give an existing person access to this company too
     if (action === "add_member") {
       const username = cleanUsername(body.username);
-      const role = body.role === "admin" ? "admin" : "staff";
+      const role = pickRole(body.role);
       if (!username || username === GUEST_USERNAME) return json({ error: "Enter a valid username." }, 400);
       const { data: existing } = await admin
         .from("company_members")
@@ -244,7 +248,6 @@ Deno.serve(async (req) => {
       const pErr = checkPassword(body.password);
       if (pErr) return json({ error: pErr }, 400);
       if (target.role === "guest") return json({ error: "The guest password is fixed. Use Disable to turn guest access off." }, 400);
-      if (target.role === "owner" && myRow.role !== "owner") return json({ error: "Only the owner can change the owner's password." }, 403);
       const { error } = await admin.auth.admin.updateUserById(uid, { password: toPassword(String(body.password)) });
       if (error) return json({ error: error.message }, 400);
       return json({ ok: true });
@@ -252,7 +255,6 @@ Deno.serve(async (req) => {
 
     if (action === "set_active") {
       if (uid === me.id) return json({ error: "You cannot disable your own account." }, 400);
-      if (target.role === "owner") return json({ error: "The owner account cannot be disabled." }, 400);
       const active = !!body.active;
       if (target.role === "guest") {
         // guest is switched on or off for all companies at once
@@ -266,9 +268,8 @@ Deno.serve(async (req) => {
 
     if (action === "set_role") {
       if (uid === me.id) return json({ error: "You cannot change your own role." }, 400);
-      if (target.role === "owner") return json({ error: "The owner's role cannot be changed." }, 400);
       if (target.role === "guest") return json({ error: "The guest account is always view only." }, 400);
-      const role = body.role === "admin" ? "admin" : "staff";
+      const role = pickRole(body.role);
       await admin.from("company_members").update({ role }).eq("company_id", cid).eq("user_id", uid);
       return json({ ok: true });
     }
