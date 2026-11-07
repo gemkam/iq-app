@@ -21,7 +21,7 @@ const TYPES = [
   ["clients", "Clients"],
   ["files", "Files"],
   ["users", "Users"],
-  ["company", "Company"],
+  ["company", "Company & subscription"],
 ] as const;
 const TABLES: Record<string, string[]> = {
   session: ["session"],
@@ -31,7 +31,7 @@ const TABLES: Record<string, string[]> = {
   clients: ["clients"],
   files: ["attachments"],
   users: ["users"],
-  company: ["companies"],
+  company: ["companies", "subscription"],
 };
 const RANGES = [
   ["1", "Today"],

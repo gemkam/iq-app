@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { getActiveCompanyId, setActiveCompanyId } from "@/lib/activeCompany";
+import { subStatus, type SubFields } from "@/lib/subscription";
 
 export type Me = {
   user_id: string;
@@ -12,6 +13,7 @@ export type Me = {
   role: "owner" | "admin" | "staff" | "guest";
   full_name: string | null;
   username: string | null;
+  sub: SubFields | null;
 };
 
 type Ctx = {
@@ -19,6 +21,8 @@ type Ctx = {
   memberships: Me[];
   isAdmin: boolean;
   isGuest: boolean;
+  /** true for guests, and for owners when the company's trial/subscription has ended */
+  readOnly: boolean;
   canCreateCompany: boolean;
   switchCompany: (companyId: string) => void;
   refresh: () => void;
@@ -28,13 +32,14 @@ const AuthCtx = createContext<Ctx>({
   memberships: [],
   isAdmin: false,
   isGuest: false,
+  readOnly: false,
   canCreateCompany: false,
   switchCompany: () => {},
   refresh: () => {},
 });
 export const useMe = () => useContext(AuthCtx);
 
-const PUBLIC = ["/login", "/setup"];
+const PUBLIC = ["/login", "/setup", "/signup"];
 
 type Row = {
   user_id: string;
@@ -42,7 +47,7 @@ type Row = {
   role: Me["role"];
   full_name: string | null;
   username: string | null;
-  companies: { name: string; created_at: string } | null;
+  companies: ({ name: string; created_at: string } & SubFields) | null;
 };
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
@@ -64,7 +69,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const loadMe = async (uid: string) => {
     const { data } = await supabase
       .from("company_members")
-      .select("user_id, company_id, role, full_name, username, companies(name, created_at)")
+      .select("user_id, company_id, role, full_name, username, companies(name, created_at, plan, trial_ends_at, paid_until, suspended)")
       .eq("user_id", uid)
       .eq("is_active", true);
     const rows = ((data as unknown as Row[]) || [])
@@ -75,6 +80,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         full_name: r.full_name,
         username: r.username,
         company_name: r.companies?.name || "Company",
+        sub: r.companies
+          ? { plan: r.companies.plan, trial_ends_at: r.companies.trial_ends_at, paid_until: r.companies.paid_until, suspended: r.companies.suspended }
+          : null,
         _created: r.companies?.created_at || "",
       }))
       .sort((a, b) => a._created.localeCompare(b._created))
@@ -131,6 +139,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   // Administrator = full control incl. Admin tab. Company owner = full work in own companies.
   const isAdmin = me?.role === "admin";
+  const st = subStatus(me?.sub);
+  const locked = st.state === "expired" || st.state === "suspended";
   return (
     <AuthCtx.Provider
       value={{
@@ -138,6 +148,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         memberships,
         isAdmin,
         isGuest: me?.role === "guest",
+        readOnly: me?.role === "guest" || (locked && !isAdmin),
         canCreateCompany: memberships.some((m) => m.role === "admin"),
         switchCompany,
         refresh: () => session && loadMe(session.user.id),

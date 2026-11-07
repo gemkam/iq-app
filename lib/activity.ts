@@ -55,8 +55,19 @@ export function describe(r: ActivityRow, codes: Record<string, string>): Describ
         user_disabled: `Disabled ${who}`,
         user_enabled: `Enabled ${who}`,
         role_changed: `Changed ${who} from ${roleLabel(String(d.from))} to ${roleLabel(String(d.to))}`,
+        signed_up: `Signed up and created company ${d.company} (free trial)`,
       };
       return { icon: "👤", color: "#8b5cf6", text: map[r.action] || `User ${r.action}`, group: "users" };
+    }
+
+    case "subscription": {
+      const map: Record<string, string> = {
+        payment_recorded: `Recorded subscription payment: ${n.months} month(s), ${Number(n.amount || 0).toFixed(3)} OMR, ${n.plan} plan`,
+        trial_extended: `Extended the free trial by ${n.days} days`,
+        suspended: "Suspended the company",
+        unsuspended: "Re-activated the company",
+      };
+      return { icon: "💳", color: "#f59e0b", text: map[r.action] || `Subscription ${r.action}`, group: "company" };
     }
 
     case "companies": {

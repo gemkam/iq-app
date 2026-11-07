@@ -15,7 +15,7 @@ const FILTERS = ["all", "draft", "submitted", "approved", "converted", "rejected
 
 export default function Quotations() {
   const { company } = useCompany();
-  const { isGuest } = useMe();
+  const { readOnly: isGuest } = useMe();
   const [rows, setRows] = useState<Quotation[]>([]);
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");

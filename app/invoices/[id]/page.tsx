@@ -19,7 +19,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default function InvoicePage() {
   const { id } = useParams<{ id: string }>();
   const { company } = useCompany();
-  const { isGuest } = useMe();
+  const { readOnly: isGuest } = useMe();
   const [inv, setInv] = useState<Invoice | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [pays, setPays] = useState<Payment[]>([]);

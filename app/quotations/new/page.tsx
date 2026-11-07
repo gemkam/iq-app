@@ -5,8 +5,8 @@ import { useMe } from "@/components/AuthGate";
 
 export default function NewQuotation() {
   const { company } = useCompany();
-  const { isGuest } = useMe();
-  if (isGuest) return <div className="card p-6 text-center text-slate-500">Guests cannot create quotations.</div>;
+  const { readOnly: isGuest } = useMe();
+  if (isGuest) return <div className="card p-6 text-center text-slate-500">View only: new quotations cannot be created right now.</div>;
   if (!company) return <p className="text-slate-500">Loading...</p>;
   return (
     <div className="space-y-4">

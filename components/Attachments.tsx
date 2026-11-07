@@ -37,7 +37,7 @@ export default function Attachments({
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const { isGuest } = useMe();
+  const { readOnly: isGuest } = useMe();
   const fileRef = useRef<HTMLInputElement>(null);
   const camRef = useRef<HTMLInputElement>(null);
 

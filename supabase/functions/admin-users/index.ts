@@ -1,5 +1,5 @@
 // Admin user management for IQ. Runs on Supabase Edge Functions with the service role key.
-// Actions: status, bootstrap, guest_login, list, create, add_member, reset_password, set_active, set_role
+// Actions: status, bootstrap, guest_login, signup, list, create, add_member, reset_password, set_active, set_role
 // Roles: admin = Administrator, owner = Company owner, staff = User, guest = view only
 // Admin actions work on the company passed as body.company_id (the company selected in the app).
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -158,6 +158,74 @@ Deno.serve(async (req) => {
         );
       }
       return json({ ok: true });
+    }
+
+    // ---------- Public sign-up: a new customer creates their company with a 30-day free trial ----------
+    if (action === "signup") {
+      const company_name = String(body.company_name || "").trim();
+      const full_name = String(body.full_name || "").trim();
+      const phone = String(body.phone || "").trim() || null;
+      const username = cleanUsername(body.username);
+      const pErr = checkPassword(body.password);
+      if (!company_name) return json({ error: "Company name is required." }, 400);
+      if (!full_name) return json({ error: "Your name is required." }, 400);
+      if (!username) return json({ error: "Username: 3 to 30 letters or numbers, no spaces." }, 400);
+      if (username === GUEST_USERNAME) return json({ error: "The username 'guest' is reserved." }, 400);
+      if (pErr) return json({ error: pErr }, 400);
+
+      // the platform administrators (of the first company) manage every customer company
+      const firstCid = await firstCompanyId();
+      const { data: admins } = await admin
+        .from("company_members")
+        .select("user_id, username, email, full_name")
+        .eq("company_id", firstCid)
+        .eq("role", "admin")
+        .eq("is_active", true);
+      if (!admins || !admins.length) return json({ error: "Sign-up is not available yet." }, 400);
+
+      const email = toEmail(username);
+      const { data: created, error } = await admin.auth.admin.createUser({
+        email,
+        password: toPassword(String(body.password)),
+        email_confirm: true,
+        user_metadata: { full_name },
+      });
+      if (error) {
+        const msg = /already|registered|exists/i.test(error.message) ? "This username is taken. Please choose another." : error.message;
+        return json({ error: msg }, 400);
+      }
+      const uid = created.user.id;
+
+      const { data: company, error: cErr } = await admin
+        .from("companies")
+        .insert({
+          name: company_name,
+          phone,
+          address: "Muscat, Oman",
+          plan: "trial",
+          default_terms: "1. Prices are in Omani Rial (OMR).\n2. Validity as stated above.\n3. Payment as per agreed milestones.",
+        })
+        .select("id, trial_ends_at")
+        .single();
+      if (cErr || !company) {
+        await admin.auth.admin.deleteUser(uid);
+        return json({ error: cErr?.message || "Could not create the company." }, 500);
+      }
+
+      const rows: Record<string, unknown>[] = [
+        { company_id: company.id, user_id: uid, role: "owner", email, username, full_name, is_active: true },
+        ...admins.map((a) => ({ company_id: company.id, user_id: a.user_id, role: "admin", email: a.email, username: a.username, full_name: a.full_name, is_active: true })),
+      ];
+      const { data: g } = await admin.from("company_members").select("user_id, is_active").eq("role", "guest").limit(1).maybeSingle();
+      if (g) rows.push({ company_id: company.id, user_id: g.user_id, role: "guest", email: toEmail(GUEST_USERNAME), username: GUEST_USERNAME, full_name: "Guest (view only)", is_active: g.is_active });
+      const { error: mErr } = await admin.from("company_members").insert(rows);
+      if (mErr) {
+        await admin.from("companies").delete().eq("id", company.id);
+        await admin.auth.admin.deleteUser(uid);
+        return json({ error: mErr.message }, 500);
+      }
+      await logUsers(company.id, uid, uid, "signed_up", { username, full_name, company: company_name, trial_ends_at: company.trial_ends_at });
+      return json({ ok: true, trial_ends_at: company.trial_ends_at });
     }
 
     // ---------- Admin only ----------

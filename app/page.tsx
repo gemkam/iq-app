@@ -56,7 +56,7 @@ function Counter({ value, money = true, className = "" }: { value: number; money
 
 export default function Dashboard() {
   const { company, error } = useCompany();
-  const { me, isGuest } = useMe();
+  const { me, readOnly: isGuest } = useMe();
   const [qs, setQs] = useState<Q[]>([]);
   const [inv, setInv] = useState<I[]>([]);
   const [pays, setPays] = useState<P[]>([]);

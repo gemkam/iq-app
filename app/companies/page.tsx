@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminCall } from "@/lib/auth";
 import { roleLabel } from "@/lib/format";
+import { stateColor, stateLabel, subStatus } from "@/lib/subscription";
 import { supabase } from "@/lib/supabase";
 import { setActiveCompanyId } from "@/lib/activeCompany";
 import { useMe } from "@/components/AuthGate";
@@ -118,7 +119,18 @@ export default function Companies() {
                   {m.company_name.slice(0, 2).toUpperCase()}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate font-bold">{m.company_name}</p>
+                  <p className="flex flex-wrap items-center gap-2 font-bold">
+                    <span className="truncate">{m.company_name}</span>
+                    {(() => {
+                      const st = subStatus(m.sub);
+                      return (
+                        <span className={`badge ${stateColor[st.state]}`}>
+                          {stateLabel[st.state]}
+                          {(st.state === "trial" || st.state === "paid") && ` · ${st.daysLeft}d`}
+                        </span>
+                      );
+                    })()}
+                  </p>
                   <p className="text-xs text-slate-500">
                     You: {roleLabel(m.role)} {active && <span className="font-semibold text-blue-600">· selected</span>}
                   </p>

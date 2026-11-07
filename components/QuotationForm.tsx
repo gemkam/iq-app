@@ -24,7 +24,7 @@ export default function QuotationForm({
   onSaved?: () => void;
 }) {
   const router = useRouter();
-  const { isGuest } = useMe();
+  const { readOnly: isGuest } = useMe();
   const converted = quotation?.status === "converted";
   const locked = converted || isGuest;
   const [units, setUnits] = useState<Unit[]>([]);

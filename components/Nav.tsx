@@ -6,12 +6,13 @@ import { logout } from "@/lib/auth";
 import { useHelp } from "./Explain";
 import { ThemeToggle } from "./Theme";
 import CompanySwitcher from "./CompanySwitcher";
+import SubscriptionBanner from "./SubscriptionBanner";
 
 export default function Nav() {
   const path = usePathname();
   const { me, isAdmin, isGuest } = useMe();
   const [help, toggleHelp] = useHelp();
-  if (path.endsWith("/print") || path === "/login" || path === "/setup" || path.startsWith("/share/")) return null;
+  if (path.endsWith("/print") || path === "/login" || path === "/setup" || path === "/signup" || path.startsWith("/share/")) return null;
 
   const links = [
     { href: "/", label: "Dashboard" },
@@ -79,6 +80,7 @@ export default function Nav() {
         </div>
       </div>
       <div className="h-[2px]" style={{ background: "linear-gradient(90deg,#2563eb,#06b6d4 40%,#e11d48)" }} />
+      <SubscriptionBanner />
       {isGuest && (
         <div className="bg-amber-400 py-1 text-center text-xs font-semibold text-amber-950">
           Guest view: you can look around but cannot make changes

@@ -20,7 +20,7 @@ export default function QuotationPage() {
   const router = useRouter();
   const autoShare = useSearchParams().get("share") === "1";
   const { company } = useCompany();
-  const { isGuest } = useMe();
+  const { readOnly: isGuest } = useMe();
   const [q, setQ] = useState<Quotation | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
