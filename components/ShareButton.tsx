@@ -10,6 +10,7 @@ export default function ShareButton({
   total,
   mobile,
   disabledReason,
+  autoOpen,
 }: {
   token: string;
   title: string; // e.g. "Quotation Q-1001"
@@ -17,8 +18,9 @@ export default function ShareButton({
   total: number;
   mobile?: string | null;
   disabledReason?: string;
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!autoOpen);
   const [copied, setCopied] = useState(false);
 
   const url = typeof window !== "undefined" ? `${window.location.origin}/share/${token}` : "";

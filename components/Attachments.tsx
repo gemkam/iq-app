@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { dateTime } from "@/lib/format";
 import Explain from "./Explain";
+import { ACCEPT, fileSize as size, uploadFiles } from "@/lib/attachments";
 
 type Att = {
   id: string;
@@ -13,11 +14,6 @@ type Att = {
   created_at: string;
 };
 
-const MAX = 10 * 1024 * 1024; // 10 MB
-const ACCEPT =
-  "application/pdf,image/*,.heic,.heif,.doc,.docx,.xls,.xlsx,.csv,.txt,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-const size = (b: number | null) => (!b ? "" : b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.ceil(b / 1024)} KB`);
 const isImage = (a: Att) => (a.mime_type || "").startsWith("image/") && !/heic|heif/i.test(a.mime_type || "");
 const icon = (a: Att) => {
   const n = a.file_name.toLowerCase();
@@ -36,7 +32,6 @@ export default function Attachments({
   quotationId?: string;
   invoiceId?: string;
 }) {
-  const recordId = (quotationId || invoiceId) as string;
   const [items, setItems] = useState<Att[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -68,33 +63,7 @@ export default function Attachments({
     if (!files || files.length === 0) return;
     setErr(null);
     setBusy(true);
-    const problems: string[] = [];
-    for (const f of Array.from(files)) {
-      if (f.size > MAX) {
-        problems.push(`${f.name}: larger than 10 MB`);
-        continue;
-      }
-      const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `${companyId}/${recordId}/${Date.now()}_${safe}`;
-      const { error: upErr } = await supabase.storage.from("attachments").upload(path, f, { contentType: f.type || undefined });
-      if (upErr) {
-        problems.push(`${f.name}: ${upErr.message}`);
-        continue;
-      }
-      const { error: rowErr } = await supabase.from("attachments").insert({
-        company_id: companyId,
-        quotation_id: quotationId || null,
-        invoice_id: invoiceId || null,
-        file_path: path,
-        file_name: f.name,
-        mime_type: f.type || null,
-        size_bytes: f.size,
-      });
-      if (rowErr) {
-        await supabase.storage.from("attachments").remove([path]);
-        problems.push(`${f.name}: ${rowErr.message}`);
-      }
-    }
+    const problems = await uploadFiles(companyId, { quotationId, invoiceId }, Array.from(files));
     setBusy(false);
     if (problems.length) setErr(problems.join("\n"));
     if (fileRef.current) fileRef.current.value = "";

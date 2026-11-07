@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
@@ -16,6 +16,7 @@ import type { Invoice, Item, Quotation } from "@/lib/types";
 export default function QuotationPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const autoShare = useSearchParams().get("share") === "1";
   const { company } = useCompany();
   const [q, setQ] = useState<Quotation | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -65,7 +66,7 @@ export default function QuotationPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ShareButton token={q.share_token} title={`Quotation ${q.code}`} clientName={q.clients?.name} total={q.total} mobile={q.mobile} />
+          <ShareButton autoOpen={autoShare} token={q.share_token} title={`Quotation ${q.code}`} clientName={q.clients?.name} total={q.total} mobile={q.mobile} />
           <Link href={`/quotations/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
           {q.status === "draft" && <button className="btn-light" onClick={() => setStatus("submitted")}>Mark submitted</button>}
           {(q.status === "draft" || q.status === "submitted") && (

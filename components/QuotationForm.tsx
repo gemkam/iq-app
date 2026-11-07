@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ACCEPT, MAX_FILE, fileSize, uploadFiles } from "@/lib/attachments";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { calcTotals, num } from "@/lib/format";
@@ -43,6 +44,18 @@ export default function QuotationForm({
     terms: quotation?.terms ?? company.default_terms ?? "",
   });
   const [items, setItems] = useState<Item[]>(initialItems?.length ? initialItems : [blankItem(1)]);
+  // Files picked before the quotation is saved; uploaded right after the first save
+  const [pending, setPending] = useState<File[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const camRef = useRef<HTMLInputElement>(null);
+  const addPending = (list: FileList | null) => {
+    if (!list) return;
+    const ok = Array.from(list).filter((f) => f.size <= MAX_FILE);
+    if (ok.length < list.length) setErr("Some files are larger than 10 MB and were skipped.");
+    setPending((p) => [...p, ...ok]);
+    if (fileRef.current) fileRef.current.value = "";
+    if (camRef.current) camRef.current.value = "";
+  };
 
   useEffect(() => {
     supabase
@@ -85,7 +98,7 @@ export default function QuotationForm({
     }
   };
 
-  const save = async (status?: "draft" | "submitted") => {
+  const save = async (status?: "draft" | "submitted", share = false) => {
     setErr(null);
     if (!f.client_name.trim()) return setErr("Company name is required.");
     const valid = items.filter((i) => i.description.trim());
@@ -146,8 +159,13 @@ export default function QuotationForm({
       const { error: itemErr } = await supabase.from("quotation_items").insert(rows);
       if (itemErr) throw itemErr;
 
+      if (!quotation && pending.length) {
+        const problems = await uploadFiles(company.id, { quotationId: id }, pending);
+        if (problems.length) alert(`Quotation saved, but some files did not upload:\n${problems.join("\n")}`);
+      }
+
       if (quotation) onSaved?.();
-      else router.push(`/quotations/${id}`);
+      else router.push(`/quotations/${id}${share ? "?share=1" : ""}`);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : (e as { message?: string })?.message || "Save failed");
     } finally {
@@ -334,6 +352,30 @@ export default function QuotationForm({
         </div>
       </div>
 
+      {!quotation && (
+        <div className="card space-y-3 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-bold">Attachments {pending.length > 0 && <span className="text-slate-400">({pending.length})</span>}</h3>
+            <div className="flex gap-2">
+              <button type="button" className="btn-light" onClick={() => camRef.current?.click()}>📷 Take photo</button>
+              <button type="button" className="btn-primary" onClick={() => fileRef.current?.click()}>⬆ Upload files</button>
+            </div>
+            <input ref={fileRef} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => addPending(e.target.files)} />
+            <input ref={camRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => addPending(e.target.files)} />
+          </div>
+          <Explain>
+            <p>Add PDFs, photos (any type), Word or Excel files now. They upload automatically when you save the quotation. Max 10 MB per file.</p>
+          </Explain>
+          {pending.length === 0 && <p className="text-sm text-slate-500">No files added yet.</p>}
+          {pending.map((f, i) => (
+            <div key={i} className="flex items-center justify-between border-t border-slate-100 pt-2 text-sm">
+              <span className="truncate">{f.type.startsWith("image/") ? "🖼️" : f.name.toLowerCase().endsWith(".pdf") ? "📕" : "📄"} {f.name} <span className="text-slate-400">{fileSize(f.size)}</span></span>
+              <button type="button" className="text-xs text-red-600" onClick={() => setPending((p) => p.filter((_, idx) => idx !== i))}>Remove</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {err && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{err}</p>}
 
       {!locked && (
@@ -344,6 +386,11 @@ export default function QuotationForm({
           {(!quotation || quotation.status === "draft") && (
             <button type="button" className="btn-primary" onClick={() => save("submitted")}>
               Save &amp; mark submitted
+            </button>
+          )}
+          {!quotation && (
+            <button type="button" className="btn-accent" onClick={() => save("submitted", true)}>
+              Save &amp; Share
             </button>
           )}
         </div>
