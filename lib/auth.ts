@@ -23,6 +23,11 @@ export async function guestLogin() {
 }
 
 export async function logout() {
+  try {
+    sessionStorage.removeItem("iq_admin_unlocked");
+  } catch {
+    /* ignore */
+  }
   await supabase.auth.signOut();
 }
 

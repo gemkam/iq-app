@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { setActiveCompanyId } from "@/lib/activeCompany";
 import { useMe } from "@/components/AuthGate";
 import Explain from "@/components/Explain";
+import AdminOnly from "@/components/AdminOnly";
 
 const blank = { name: "", cr_number: "", vatin: "", phone: "", email: "", address: "", vat_registered: false };
 
@@ -42,6 +43,7 @@ export default function Companies() {
   };
 
   return (
+    <AdminOnly>
     <div className="space-y-4">
       <div>
         <Link href="/admin" className="text-sm text-slate-500">← Admin</Link>
@@ -122,5 +124,6 @@ export default function Companies() {
         </div>
       </form>
     </div>
+    </AdminOnly>
   );
 }
