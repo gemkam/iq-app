@@ -125,6 +125,14 @@ export default function InvoicePage() {
             mobile={inv.quotations?.mobile}
             disabledReason={isDraft ? "Issue the invoice first. Draft invoices cannot be shared." : undefined}
           />
+          {!isGuest &&
+            (isDraft ? (
+              <button className="btn-light opacity-60" onClick={() => alert("Issue the invoice first. Draft invoices cannot be edited as PDF.")}>
+                ✏️ Edit PDF
+              </button>
+            ) : (
+              <Link href={`/edit-pdf/${inv.share_token}`} className="btn-light">✏️ Edit PDF</Link>
+            ))}
           <Link href={`/invoices/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
           {canEdit && (
             <>

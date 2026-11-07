@@ -70,6 +70,7 @@ export default function QuotationPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ShareButton autoOpen={autoShare} token={q.share_token} title={`Quotation ${q.code}`} clientName={q.clients?.name} total={q.total} mobile={q.mobile} />
+          {!isGuest && <Link href={`/edit-pdf/${q.share_token}`} className="btn-light">✏️ Edit PDF</Link>}
           <Link href={`/quotations/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
           {!isGuest && q.status === "draft" && <button className="btn-light" onClick={() => setStatus("submitted")}>Mark submitted</button>}
           {!isGuest && (q.status === "draft" || q.status === "submitted") && (
@@ -86,7 +87,7 @@ export default function QuotationPage() {
       <Explain title="What you can do here">
         <p>Edit the quotation and press <b>Save changes</b>. Every change is kept in the <b>Change history</b> at the bottom.</p>
         <p>Use the buttons above to mark it Submitted, Approved or Rejected. <b>Print / PDF</b> opens a printable page (choose &quot;Save as PDF&quot; in the print window).</p>
-        <p><b>Share</b> sends a read-only link by WhatsApp, email or any app. The client opens it without a login and can save it as PDF.</p>
+        <p><b>Share</b> sends a read-only link or a PDF by WhatsApp, email or any app. <b>Edit PDF</b> lets you change text, add notes, sign, stamp or highlight before sending (the saved quotation does not change).</p>
         <p>When the client agrees, use <b>Convert to Invoice</b> below. After that the quotation is locked.</p>
       </Explain>
 
