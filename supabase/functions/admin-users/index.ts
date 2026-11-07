@@ -46,6 +46,18 @@ function checkPassword(p: unknown): string | null {
   return null;
 }
 
+// Write a line to the activity log (shown in Admin → Activity)
+async function logUsers(cid: string, byUser: string | null, targetUser: string, action: string, details: Record<string, unknown>) {
+  await admin.from("audit_log").insert({
+    company_id: cid,
+    table_name: "users",
+    record_id: targetUser,
+    action,
+    new_data: details,
+    changed_by: byUser,
+  });
+}
+
 // Ban the login only when the person has no active company left
 async function syncBan(uid: string) {
   const { count } = await admin
@@ -100,6 +112,7 @@ Deno.serve(async (req) => {
         await admin.auth.admin.deleteUser(created.user.id);
         return json({ error: mErr.message }, 500);
       }
+      await logUsers(cid, created.user.id, created.user.id, "user_created", { username, full_name, role: "admin", note: "first setup" });
       return json({ ok: true });
     }
 
@@ -210,6 +223,7 @@ Deno.serve(async (req) => {
         await admin.auth.admin.deleteUser(created.user.id);
         return json({ error: mErr.message }, 500);
       }
+      await logUsers(cid, me.id, created.user.id, "user_created", { username, full_name, role });
       return json({ ok: true });
     }
 
@@ -237,6 +251,7 @@ Deno.serve(async (req) => {
       });
       if (error) return json({ error: error.message }, 500);
       await syncBan(existing.user_id);
+      await logUsers(cid, me.id, existing.user_id, "user_added", { username: existing.username, full_name: existing.full_name, role });
       return json({ ok: true });
     }
 
@@ -250,6 +265,7 @@ Deno.serve(async (req) => {
       if (target.role === "guest") return json({ error: "The guest password is fixed. Use Disable to turn guest access off." }, 400);
       const { error } = await admin.auth.admin.updateUserById(uid, { password: toPassword(String(body.password)) });
       if (error) return json({ error: error.message }, 400);
+      await logUsers(cid, me.id, uid, "password_changed", { username: target.username, full_name: target.full_name });
       return json({ ok: true });
     }
 
@@ -263,6 +279,7 @@ Deno.serve(async (req) => {
         await admin.from("company_members").update({ is_active: active }).eq("company_id", cid).eq("user_id", uid);
       }
       await syncBan(uid);
+      await logUsers(cid, me.id, uid, active ? "user_enabled" : "user_disabled", { username: target.username, full_name: target.full_name });
       return json({ ok: true });
     }
 
@@ -271,6 +288,7 @@ Deno.serve(async (req) => {
       if (target.role === "guest") return json({ error: "The guest account is always view only." }, 400);
       const role = pickRole(body.role);
       await admin.from("company_members").update({ role }).eq("company_id", cid).eq("user_id", uid);
+      await logUsers(cid, me.id, uid, "role_changed", { username: target.username, full_name: target.full_name, from: target.role, to: role });
       return json({ ok: true });
     }
 

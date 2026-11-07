@@ -7,8 +7,23 @@ const DOMAIN = "iq.local";
 export const toEmail = (u: string) => `${u.trim().toLowerCase()}@${DOMAIN}`;
 export const toPassword = (p: string) => `IQ::${p}`;
 
+// Records login/logout in the activity log (Admin → Activity). Never blocks the user.
+async function logSession(action: "login" | "logout") {
+  try {
+    let cid = getActiveCompanyId();
+    if (!cid) {
+      const { data } = await supabase.from("company_members").select("company_id").eq("is_active", true).limit(1).maybeSingle();
+      cid = data?.company_id ?? null;
+    }
+    if (cid) await supabase.rpc("log_activity", { p_company: cid, p_action: action, p_details: { device: navigator.userAgent.slice(0, 120) } });
+  } catch {
+    /* logging must never break login */
+  }
+}
+
 export async function login(username: string, password: string) {
   const { error } = await supabase.auth.signInWithPassword({ email: toEmail(username), password: toPassword(password) });
+  if (!error) logSession("login");
   if (error) {
     if (/invalid/i.test(error.message)) throw new Error("Wrong username or password.");
     if (/banned/i.test(error.message)) throw new Error("This account is disabled. Contact your admin.");
@@ -28,6 +43,7 @@ export async function logout() {
   } catch {
     /* ignore */
   }
+  await logSession("logout");
   await supabase.auth.signOut();
 }
 
