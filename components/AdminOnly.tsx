@@ -35,14 +35,14 @@ export default function AdminOnly({ children }: { children: React.ReactNode }) {
   if (!isAdmin) return <div className="card p-6 text-center text-slate-500">Only admins can open this page.</div>;
 
   if (!ok) {
-    const submit = async (e: React.FormEvent) => {
-      e.preventDefault();
+    // Checks the password as soon as all 6 digits are typed. No button needed.
+    const check = async (value: string) => {
       setErr(null);
       setBusy(true);
-      const { data, error } = await supabase.rpc("verify_admin_pin", { p_pin: pin });
+      const { data, error } = await supabase.rpc("verify_admin_pin", { p_pin: value });
       setBusy(false);
       if (error || !data) {
-        setErr("Wrong admin password.");
+        setErr("Incorrect password");
         setPin("");
         return;
       }
@@ -54,22 +54,29 @@ export default function AdminOnly({ children }: { children: React.ReactNode }) {
       setOk(true);
     };
     return (
-      <form onSubmit={submit} className="card mx-auto mt-6 max-w-sm space-y-4 p-6 text-center">
+      <div className="card mx-auto mt-6 max-w-sm space-y-4 p-6 text-center">
         <div className="text-4xl">🔒</div>
         <h1 className="text-xl font-bold">Admin is locked</h1>
-        <p className="text-sm text-slate-500">Enter the admin password to manage users, companies and settings.</p>
+        <p className="text-sm text-slate-500">Type the admin password. It opens automatically.</p>
         <input
-          className="input text-center text-lg tracking-[0.4em]"
+          className={`input text-center text-2xl tracking-[0.5em] ${err ? "border-red-500" : ""}`}
           type="password"
           inputMode="numeric"
+          autoComplete="off"
+          maxLength={6}
           autoFocus
+          readOnly={busy}
           value={pin}
-          onChange={(e) => setPin(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+            setPin(v);
+            if (err) setErr(null);
+            if (v.length === 6) check(v);
+          }}
           placeholder="••••••"
         />
-        {err && <p className="text-sm text-red-600">{err}</p>}
-        <button className="btn-primary w-full py-3" disabled={busy || !pin}>{busy ? "Checking..." : "Unlock"}</button>
-      </form>
+        <p className={`h-5 text-sm font-semibold ${err ? "text-red-600" : "text-slate-400"}`}>{busy ? "Checking..." : err || ""}</p>
+      </div>
     );
   }
 
