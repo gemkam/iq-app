@@ -66,7 +66,7 @@ export default function Login() {
     <p className="mt-2 text-center text-xs text-slate-500">Guests can view everything but cannot make changes.</p>
     <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-500/5 p-3 text-center">
       <p className="text-sm font-semibold">New here?</p>
-      <a href="/signup" className="btn-accent mt-2 w-full py-2.5">Start your 30-day free trial</a>
+      <a href="/signup" className="btn-accent mt-2 w-full py-2.5">Start your 7-day free trial</a>
     </div>
   </AuthCard>;
 }

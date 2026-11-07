@@ -103,7 +103,7 @@ export default function Subscriptions() {
         </div>
 
         <Explain title="How subscriptions work">
-          <p>Every new company gets a <b>30-day free trial</b>. When the trial or the paid period ends, the company becomes <b>view only</b> for its owner: they can see and download everything but cannot create or change anything. Data is never deleted.</p>
+          <p>Every new company gets a <b>7-day free trial</b>. When the trial or the paid period ends, the company becomes <b>view only</b> for its owner: they can see and download everything but cannot create or change anything. Data is never deleted.</p>
           <p>When a customer pays you (bank transfer, cash, payment link), press <b>Record payment</b>. The paid period starts from today or from the current end date, whichever is later.</p>
           <p>Administrators can always edit every company, even when it is expired. Companies created by administrators are <b>Unlimited</b> (no trial, never expire). Use <b>Make unlimited</b> for any company that should never expire.</p>
         </Explain>
@@ -177,9 +177,9 @@ export default function Subscriptions() {
                   <button
                     className="btn-light"
                     disabled={busy}
-                    onClick={() => act(() => supabase.rpc("extend_trial", { p_company: c.id, p_days: 30 }), `Trial of ${c.name} extended by 30 days.`)}
+                    onClick={() => act(() => supabase.rpc("extend_trial", { p_company: c.id, p_days: 7 }), `Trial of ${c.name} extended by 7 days.`)}
                   >
-                    +30 days trial
+                    +7 days trial
                   </button>
                   <button
                     className="btn-light"

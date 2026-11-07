@@ -44,7 +44,7 @@ export default function Signup() {
   };
 
   return (
-    <AuthCard title="Start your free trial" subtitle="30 days free. No card needed.">
+    <AuthCard title="Start your free trial" subtitle="7 days free. No card needed.">
       <ul className="mb-4 space-y-1 text-sm text-slate-600">
         <li>✓ Quotations and invoices with VAT, discounts and Omani Rial</li>
         <li>✓ Advance and milestone invoices, payments and balances</li>
@@ -83,7 +83,7 @@ export default function Signup() {
           className="btn-accent w-full py-3"
           disabled={busy || !f.company_name || !f.full_name || !f.username || !f.password || !f.confirm}
         >
-          {busy ? "Creating your account..." : "Start 30-day free trial"}
+          {busy ? "Creating your account..." : "Start 7-day free trial"}
         </button>
       </form>
       <p className="mt-4 text-center text-sm text-slate-500">

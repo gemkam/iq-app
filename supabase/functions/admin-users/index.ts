@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    // ---------- Public sign-up: a new customer creates their company with a 30-day free trial ----------
+    // ---------- Public sign-up: a new customer creates their company with a 7-day free trial ----------
     if (action === "signup") {
       const company_name = String(body.company_name || "").trim();
       const full_name = String(body.full_name || "").trim();
