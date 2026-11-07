@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getActiveCompanyId } from "./activeCompany";
 
 // Testing phase: usernames map to internal emails and passwords get a fixed prefix.
 // Must match supabase/functions/admin-users/index.ts
@@ -27,7 +28,9 @@ export async function logout() {
 
 // Calls the admin-users server function
 export async function adminCall<T = { ok: boolean }>(action: string, body: Record<string, unknown> = {}): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("admin-users", { body: { action, ...body } });
+  // admin actions apply to the company selected in the app
+  const company_id = body.company_id ?? getActiveCompanyId() ?? undefined;
+  const { data, error } = await supabase.functions.invoke("admin-users", { body: { action, company_id, ...body } });
   if (error) {
     // Read the message the function sent back
     let msg = error.message;

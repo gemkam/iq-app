@@ -5,6 +5,7 @@ import { useMe } from "./AuthGate";
 import { logout } from "@/lib/auth";
 import { useHelp } from "./Explain";
 import { ThemeToggle } from "./Theme";
+import CompanySwitcher from "./CompanySwitcher";
 
 export default function Nav() {
   const path = usePathname();
@@ -25,14 +26,14 @@ export default function Nav() {
     <header className="no-print sticky top-0 z-20 text-white shadow-lg" style={{ background: "linear-gradient(90deg, #05070d, #0b1730 55%, #111a3a)" }}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5">
         {/* Row 1 on phones: logo + help + logout */}
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="iq-mark grid h-9 w-9 place-items-center rounded-xl p-[2px]">
-            <span className="grid h-full w-full place-items-center rounded-[10px] bg-[#05070d] text-sm font-black tracking-tight">IQ</span>
-          </span>
-          <span className="hidden font-semibold tracking-wide lg:block">
-            Quotations <span className="text-rose-400">&amp;</span> Invoices
-          </span>
-        </Link>
+        <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <span className="iq-mark grid h-9 w-9 place-items-center rounded-xl p-[2px]">
+              <span className="grid h-full w-full place-items-center rounded-[10px] bg-[#05070d] text-sm font-black tracking-tight">IQ</span>
+            </span>
+          </Link>
+          <CompanySwitcher />
+        </div>
 
         {/* Links: own full-width row on phones, inline on bigger screens */}
         <nav className="order-last grid w-full grid-flow-col auto-cols-fr gap-1 text-sm md:order-none md:flex md:w-auto">
@@ -57,7 +58,8 @@ export default function Nav() {
             onClick={toggleHelp}
             title="Show or hide the explanation boxes"
           >
-            Help {help ? "On" : "Off"}
+            <span className="md:hidden">?</span>
+            <span className="hidden md:inline">Help {help ? "On" : "Off"}</span>
           </button>
           <ThemeToggle />
           <button className="rounded-lg border border-white/30 px-2.5 py-1 hover:bg-white/10" onClick={logout}>

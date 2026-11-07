@@ -3,8 +3,9 @@ import Link from "next/link";
 import AdminOnly from "@/components/AdminOnly";
 
 const tiles = [
+  { href: "/admin/companies", title: "Companies", text: "Add more companies and switch between them", icon: "🏗️" },
   { href: "/admin/users", title: "Users", text: "Create users, reset passwords, disable access", icon: "👥" },
-  { href: "/settings", title: "Company settings", text: "Name, CR, VAT, logo and terms on documents", icon: "🏢" },
+  { href: "/settings", title: "Company settings", text: "Name, CR, VAT, logo and terms of the selected company", icon: "🏢" },
 ];
 
 export default function Admin() {

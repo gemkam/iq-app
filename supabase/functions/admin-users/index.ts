@@ -1,5 +1,6 @@
 // Admin user management for IQ. Runs on Supabase Edge Functions with the service role key.
-// Actions: status, bootstrap, guest_login, list, create, reset_password, set_active, set_role
+// Actions: status, bootstrap, guest_login, list, create, add_member, reset_password, set_active, set_role
+// Admin actions work on the company passed as body.company_id (the company selected in the app).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -39,6 +40,16 @@ function cleanUsername(u: unknown): string | null {
 function checkPassword(p: unknown): string | null {
   if (typeof p !== "string" || p.length < 4) return "Password must be at least 4 characters.";
   return null;
+}
+
+// Ban the login only when the person has no active company left
+async function syncBan(uid: string) {
+  const { count } = await admin
+    .from("company_members")
+    .select("user_id", { count: "exact", head: true })
+    .eq("user_id", uid)
+    .eq("is_active", true);
+  await admin.auth.admin.updateUserById(uid, { ban_duration: count ? "none" : BAN_FOREVER });
 }
 
 Deno.serve(async (req) => {
@@ -88,19 +99,21 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    // ---------- Guest: make sure the read-only guest account exists ----------
+    // ---------- Guest: read-only account that can view every company ----------
     if (action === "guest_login") {
       const cid = await firstCompanyId();
       if (!cid) return json({ error: "No company set up" }, 500);
       const { count: owners } = await admin
-        .from("company_members").select("user_id", { count: "exact", head: true })
-        .eq("company_id", cid).neq("role", "guest");
+        .from("company_members")
+        .select("user_id", { count: "exact", head: true })
+        .neq("role", "guest");
       if (!owners) return json({ error: "The app is not set up yet." }, 400);
 
-      const { data: g } = await admin.from("company_members").select("user_id, is_active")
-        .eq("company_id", cid).eq("role", "guest").maybeSingle();
-      if (g && !g.is_active) return json({ error: "Guest access is turned off." }, 403);
-      if (!g) {
+      const { data: rows } = await admin.from("company_members").select("user_id, is_active").eq("role", "guest");
+      let guestId = rows?.[0]?.user_id as string | undefined;
+      if (rows && rows.length && !rows.some((r) => r.is_active)) return json({ error: "Guest access is turned off." }, 403);
+
+      if (!guestId) {
         const { data: created, error } = await admin.auth.admin.createUser({
           email: toEmail(GUEST_USERNAME),
           password: toPassword(GUEST_PASSWORD),
@@ -108,10 +121,24 @@ Deno.serve(async (req) => {
           user_metadata: { full_name: "Guest" },
         });
         if (error) return json({ error: error.message }, 400);
-        await admin.from("company_members").insert({
-          company_id: cid, user_id: created.user.id, role: "guest",
-          email: toEmail(GUEST_USERNAME), username: GUEST_USERNAME, full_name: "Guest (view only)",
-        });
+        guestId = created.user.id;
+      }
+      // make sure the guest can view every company
+      const { data: companies } = await admin.from("companies").select("id");
+      const { data: has } = await admin.from("company_members").select("company_id").eq("user_id", guestId);
+      const have = new Set((has || []).map((h) => h.company_id));
+      const missing = (companies || []).filter((c) => !have.has(c.id));
+      if (missing.length) {
+        await admin.from("company_members").insert(
+          missing.map((c) => ({
+            company_id: c.id,
+            user_id: guestId,
+            role: "guest",
+            email: toEmail(GUEST_USERNAME),
+            username: GUEST_USERNAME,
+            full_name: "Guest (view only)",
+          }))
+        );
       }
       return json({ ok: true });
     }
@@ -123,14 +150,10 @@ Deno.serve(async (req) => {
     if (whoErr || !who.user) return json({ error: "Session expired. Please log in again." }, 401);
     const me = who.user;
 
-    const { data: myRow } = await admin
-      .from("company_members")
-      .select("company_id, role, is_active")
-      .eq("user_id", me.id)
-      .eq("is_active", true)
-      .limit(1)
-      .maybeSingle();
-    if (!myRow || !["owner", "admin"].includes(myRow.role)) return json({ error: "Only admins can manage users." }, 403);
+    let q = admin.from("company_members").select("company_id, role, is_active").eq("user_id", me.id).eq("is_active", true);
+    if (body.company_id) q = q.eq("company_id", String(body.company_id));
+    const { data: myRow } = await q.order("created_at").limit(1).maybeSingle();
+    if (!myRow || !["owner", "admin"].includes(myRow.role)) return json({ error: "Only admins of this company can manage users." }, 403);
     const cid = myRow.company_id as string;
 
     const getTarget = async (uid: string) => {
@@ -171,7 +194,9 @@ Deno.serve(async (req) => {
         user_metadata: { full_name },
       });
       if (error) {
-        const msg = /already|registered|exists/i.test(error.message) ? "This username is already taken." : error.message;
+        const msg = /already|registered|exists/i.test(error.message)
+          ? "This username already exists. Use 'Add existing user' to give them access to this company."
+          : error.message;
         return json({ error: msg }, 400);
       }
       const { error: mErr } = await admin
@@ -181,6 +206,33 @@ Deno.serve(async (req) => {
         await admin.auth.admin.deleteUser(created.user.id);
         return json({ error: mErr.message }, 500);
       }
+      return json({ ok: true });
+    }
+
+    // Give an existing person access to this company too
+    if (action === "add_member") {
+      const username = cleanUsername(body.username);
+      const role = body.role === "admin" ? "admin" : "staff";
+      if (!username || username === GUEST_USERNAME) return json({ error: "Enter a valid username." }, 400);
+      const { data: existing } = await admin
+        .from("company_members")
+        .select("user_id, email, full_name, username")
+        .eq("username", username)
+        .limit(1)
+        .maybeSingle();
+      if (!existing) return json({ error: `No user called '${username}'. Create them instead.` }, 404);
+      const already = await getTarget(existing.user_id);
+      if (already) return json({ error: `${username} already has access to this company.` }, 400);
+      const { error } = await admin.from("company_members").insert({
+        company_id: cid,
+        user_id: existing.user_id,
+        role,
+        email: existing.email,
+        username: existing.username,
+        full_name: existing.full_name,
+      });
+      if (error) return json({ error: error.message }, 500);
+      await syncBan(existing.user_id);
       return json({ ok: true });
     }
 
@@ -202,9 +254,13 @@ Deno.serve(async (req) => {
       if (uid === me.id) return json({ error: "You cannot disable your own account." }, 400);
       if (target.role === "owner") return json({ error: "The owner account cannot be disabled." }, 400);
       const active = !!body.active;
-      const { error } = await admin.auth.admin.updateUserById(uid, { ban_duration: active ? "none" : BAN_FOREVER });
-      if (error) return json({ error: error.message }, 400);
-      await admin.from("company_members").update({ is_active: active }).eq("company_id", cid).eq("user_id", uid);
+      if (target.role === "guest") {
+        // guest is switched on or off for all companies at once
+        await admin.from("company_members").update({ is_active: active }).eq("user_id", uid);
+      } else {
+        await admin.from("company_members").update({ is_active: active }).eq("company_id", cid).eq("user_id", uid);
+      }
+      await syncBan(uid);
       return json({ ok: true });
     }
 

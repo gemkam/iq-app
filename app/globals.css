@@ -75,15 +75,6 @@ body {
   height: 0.8em;
   flex: none;
   align-self: center;
-  background-color: currentColor;
-  -webkit-mask: url("/omr-sign.svg") center / contain no-repeat;
-  mask: url("/omr-sign.svg") center / contain no-repeat;
-}
-@media print {
-  .omr-sign {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
 }
 
 /* Logo mark */
@@ -180,6 +171,7 @@ body {
    DARK MODE (html.dark). Default theme. Printed / shared documents
    never get the .dark class, so they stay white.
    ===================================================================== */
+
 html.dark {
   color-scheme: dark;
 }
@@ -193,71 +185,97 @@ html.dark body {
 }
 
 /* Surfaces */
-html.dark .card {
+
+html.dark .card:not(.doc-light, .doc-light *) {
   background: linear-gradient(180deg, rgba(20, 30, 54, 0.92), rgba(13, 20, 38, 0.92));
   border-color: rgba(148, 163, 184, 0.14);
   box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
-html.dark .bg-white { background-color: #0e1628; }
-html.dark .bg-slate-50,
-html.dark .hover\:bg-slate-50:hover { background-color: rgba(148, 163, 184, 0.08); }
-html.dark .bg-slate-100,
-html.dark .bg-slate-200 { background-color: rgba(148, 163, 184, 0.12); }
-html.dark .bg-slate-800 { background-color: #2563eb; }
+html.dark .bg-white:not(.doc-light, .doc-light *) { background-color: #0e1628; }
+html.dark .bg-slate-50:not(.doc-light, .doc-light *),
+html.dark .hover\:bg-slate-50:not(.doc-light, .doc-light *):hover { background-color: rgba(148, 163, 184, 0.08); }
+html.dark .bg-slate-100:not(.doc-light, .doc-light *),
+html.dark .bg-slate-200:not(.doc-light, .doc-light *) { background-color: rgba(148, 163, 184, 0.12); }
+html.dark .bg-slate-800:not(.doc-light, .doc-light *) { background-color: #2563eb; }
 
 /* Text */
-html.dark .text-slate-900,
-html.dark .text-slate-800,
-html.dark .text-slate-700 { color: #e2e8f0; }
-html.dark .text-slate-600 { color: #b6c2d6; }
-html.dark .text-slate-500 { color: #94a3b8; }
-html.dark .text-slate-400 { color: #7486a3; }
+
+html.dark .text-slate-900:not(.doc-light, .doc-light *),
+html.dark .text-slate-800:not(.doc-light, .doc-light *),
+html.dark .text-slate-700:not(.doc-light, .doc-light *) { color: #e2e8f0; }
+html.dark .text-slate-600:not(.doc-light, .doc-light *) { color: #b6c2d6; }
+html.dark .text-slate-500:not(.doc-light, .doc-light *) { color: #94a3b8; }
+html.dark .text-slate-400:not(.doc-light, .doc-light *) { color: #7486a3; }
 
 /* Borders */
-html.dark .border-slate-50,
-html.dark .border-slate-100,
-html.dark .border-slate-200,
-html.dark .border-slate-200\/80,
-html.dark .border-slate-300,
-html.dark .border-slate-400 { border-color: rgba(148, 163, 184, 0.16); }
+
+html.dark .border-slate-50:not(.doc-light, .doc-light *),
+html.dark .border-slate-100:not(.doc-light, .doc-light *),
+html.dark .border-slate-200:not(.doc-light, .doc-light *),
+html.dark .border-slate-200\/80:not(.doc-light, .doc-light *),
+html.dark .border-slate-300:not(.doc-light, .doc-light *),
+html.dark .border-slate-400:not(.doc-light, .doc-light *) { border-color: rgba(148, 163, 184, 0.16); }
 
 /* Form controls and light buttons */
-html.dark .input {
+
+html.dark .input:not(.doc-light, .doc-light *) {
   background: #0a1122;
   border-color: rgba(148, 163, 184, 0.22);
   color: #e2e8f0;
 }
-html.dark .input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
-html.dark .input:disabled { opacity: 0.7; }
-html.dark .input::placeholder { color: #64748b; }
-html.dark .btn-light {
+html.dark .input:not(.doc-light, .doc-light *):focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); }
+html.dark .input:not(.doc-light, .doc-light *):disabled { opacity: 0.7; }
+html.dark .input:not(.doc-light, .doc-light *)::placeholder { color: #64748b; }
+html.dark .btn-light:not(.doc-light, .doc-light *) {
   background: rgba(148, 163, 184, 0.08);
   border-color: rgba(148, 163, 184, 0.22);
   color: #dbe4f0;
 }
-html.dark .btn-light:hover { background: rgba(148, 163, 184, 0.16); }
-html.dark .lbl,
-html.dark .th { color: #8fa0bb; }
-html.dark select.input option { background: #0e1628; color: #e2e8f0; }
+html.dark .btn-light:not(.doc-light, .doc-light *):hover { background: rgba(148, 163, 184, 0.16); }
+html.dark .lbl:not(.doc-light, .doc-light *),
+html.dark .th:not(.doc-light, .doc-light *) { color: #8fa0bb; }
+html.dark select.input option:not(.doc-light, .doc-light *) { background: #0e1628; color: #e2e8f0; }
 
 /* Status colours: translucent backgrounds, bright text */
-html.dark .bg-red-50, html.dark .bg-red-100, html.dark .bg-rose-100 { background-color: rgba(225, 29, 72, 0.14); }
-html.dark .bg-emerald-50, html.dark .bg-emerald-100, html.dark .hover\:bg-emerald-50:hover { background-color: rgba(16, 185, 129, 0.14); }
-html.dark .bg-amber-50, html.dark .bg-amber-100 { background-color: rgba(245, 158, 11, 0.14); }
-html.dark .bg-orange-100 { background-color: rgba(249, 115, 22, 0.16); }
-html.dark .bg-violet-50, html.dark .bg-violet-100 { background-color: rgba(139, 92, 246, 0.16); }
-html.dark .bg-blue-100, html.dark .bg-sky-100 { background-color: rgba(37, 99, 235, 0.18); }
-html.dark .bg-sky-50 { background-color: rgba(14, 165, 233, 0.08); }
-html.dark .border-sky-100, html.dark .border-sky-200 { border-color: rgba(56, 189, 248, 0.22); }
 
-html.dark .text-red-600, html.dark .text-red-700, html.dark .text-rose-600 { color: #fb7185; }
-html.dark .text-emerald-600, html.dark .text-emerald-700, html.dark .text-emerald-800 { color: #34d399; }
-html.dark .text-amber-800, html.dark .text-amber-900 { color: #fcd34d; }
-html.dark .text-orange-800 { color: #fdba74; }
-html.dark .text-violet-700, html.dark .text-violet-800 { color: #c4b5fd; }
-html.dark .text-blue-600, html.dark .text-blue-700 { color: #60a5fa; }
-html.dark .text-sky-700 { color: #7dd3fc; }
-html.dark .text-sky-900 { color: #bae6fd; }
+html.dark .bg-red-50:not(.doc-light, .doc-light *),
+html.dark .bg-red-100:not(.doc-light, .doc-light *),
+html.dark .bg-rose-100:not(.doc-light, .doc-light *) { background-color: rgba(225, 29, 72, 0.14); }
+html.dark .bg-emerald-50:not(.doc-light, .doc-light *),
+html.dark .bg-emerald-100:not(.doc-light, .doc-light *),
+html.dark .hover\:bg-emerald-50:not(.doc-light, .doc-light *):hover { background-color: rgba(16, 185, 129, 0.14); }
+html.dark .bg-amber-50:not(.doc-light, .doc-light *),
+html.dark .bg-amber-100:not(.doc-light, .doc-light *) { background-color: rgba(245, 158, 11, 0.14); }
+html.dark .bg-orange-100:not(.doc-light, .doc-light *) { background-color: rgba(249, 115, 22, 0.16); }
+html.dark .bg-violet-50:not(.doc-light, .doc-light *),
+html.dark .bg-violet-100:not(.doc-light, .doc-light *) { background-color: rgba(139, 92, 246, 0.16); }
+html.dark .bg-blue-100:not(.doc-light, .doc-light *),
+html.dark .bg-sky-100:not(.doc-light, .doc-light *) { background-color: rgba(37, 99, 235, 0.18); }
+html.dark .bg-sky-50:not(.doc-light, .doc-light *) { background-color: rgba(14, 165, 233, 0.08); }
+html.dark .border-sky-100:not(.doc-light, .doc-light *),
+html.dark .border-sky-200:not(.doc-light, .doc-light *) { border-color: rgba(56, 189, 248, 0.22); }
+html.dark .text-red-600:not(.doc-light, .doc-light *),
+html.dark .text-red-700:not(.doc-light, .doc-light *),
+html.dark .text-rose-600:not(.doc-light, .doc-light *) { color: #fb7185; }
+html.dark .text-emerald-600:not(.doc-light, .doc-light *),
+html.dark .text-emerald-700:not(.doc-light, .doc-light *),
+html.dark .text-emerald-800:not(.doc-light, .doc-light *) { color: #34d399; }
+html.dark .text-amber-800:not(.doc-light, .doc-light *),
+html.dark .text-amber-900:not(.doc-light, .doc-light *) { color: #fcd34d; }
+html.dark .text-orange-800:not(.doc-light, .doc-light *) { color: #fdba74; }
+html.dark .text-violet-700:not(.doc-light, .doc-light *),
+html.dark .text-violet-800:not(.doc-light, .doc-light *) { color: #c4b5fd; }
+html.dark .text-blue-600:not(.doc-light, .doc-light *),
+html.dark .text-blue-700:not(.doc-light, .doc-light *) { color: #60a5fa; }
+html.dark .text-sky-700:not(.doc-light, .doc-light *) { color: #7dd3fc; }
+html.dark .text-sky-900:not(.doc-light, .doc-light *) { color: #bae6fd; }
 
 /* Tables */
-html.dark thead.bg-slate-50 { background-color: rgba(148, 163, 184, 0.06); }
+
+html.dark thead.bg-slate-50:not(.doc-light, .doc-light *) { background-color: rgba(148, 163, 184, 0.06); }
+
+/* Documents are always printed paper: dark ink on white */
+.doc-light {
+  color: #0b1220;
+  color-scheme: light;
+}

@@ -19,6 +19,7 @@ export default function PrintDoc({
   notes,
   footer,
   shared,
+  bare,
 }: {
   company: Company;
   title: string;
@@ -33,11 +34,12 @@ export default function PrintDoc({
   notes?: string | null;
   footer?: React.ReactNode;
   shared?: boolean;
+  bare?: boolean; // no buttons (used when making a PDF)
 }) {
   const unitLabel = (c: string) => units.find((u) => u.code === c)?.label || c;
   return (
-    <div className="mx-auto max-w-[800px] bg-white p-6 text-[13px] text-slate-900 sm:p-10 print:p-0">
-      <div className="no-print mb-6 flex gap-2">
+    <div className="doc-light mx-auto max-w-[800px] bg-white p-6 text-[13px] text-slate-900 sm:p-10 print:p-0">
+      <div className={`no-print mb-6 flex gap-2 ${bare ? "hidden" : ""}`}>
         <button className="btn-primary" onClick={() => window.print()}>Print / Save as PDF</button>
         {!shared && <button className="btn-light" onClick={() => window.close()}>Close</button>}
       </div>

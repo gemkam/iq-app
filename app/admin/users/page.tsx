@@ -5,6 +5,7 @@ import AdminOnly from "@/components/AdminOnly";
 import { adminCall } from "@/lib/auth";
 import { dateTime } from "@/lib/format";
 import Explain from "@/components/Explain";
+import { useMe } from "@/components/AuthGate";
 
 type U = {
   user_id: string;
@@ -25,6 +26,8 @@ export default function Users() {
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState({ full_name: "", username: "", password: "1234", role: "staff" });
+  const [ex, setEx] = useState({ username: "", role: "staff" });
+  const { me } = useMe();
 
   const load = async () => {
     try {
@@ -76,11 +79,12 @@ export default function Users() {
         <div>
           <Link href="/admin" className="text-sm text-slate-500">← Admin</Link>
           <h1 className="text-2xl font-bold">Users</h1>
+          <p className="text-sm text-slate-500">Company: <b>{me?.company_name}</b></p>
         </div>
 
         <Explain title="Users">
           <p>Create a login for each tester. Give them the <b>username</b> and <b>password</b> shown in the green message.</p>
-          <p><b>Disable</b> stops a user from logging in (their work stays). <b>Change password</b> sets a new one.</p>
+          <p>Users belong to the company selected at the top. <b>Disable</b> removes their access to this company (their work stays). <b>Change password</b> sets a new one for all their companies.</p>
           <p>Every change in quotations and invoices shows <b>who</b> made it in the Change history.</p>
           <p><b>Guest:</b> anyone can tap &quot;Continue as Guest&quot; on the login page to view the app without changing anything. The Guest account appears here after the first guest visit. Disable it to turn guest access off.</p>
         </Explain>
@@ -110,6 +114,32 @@ export default function Users() {
           <p className="text-xs text-slate-500 sm:col-span-5">
             User: quotations, invoices and payments. Admin: also manages users and company settings.
           </p>
+        </form>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const uname = ex.username.trim().toLowerCase();
+            run(async () => {
+              await adminCall("add_member", { username: uname, role: ex.role });
+              setEx({ username: "", role: "staff" });
+            }, `${uname} can now use ${me?.company_name} with the same username and password.`);
+          }}
+          className="card grid gap-3 p-4 sm:grid-cols-4 sm:items-end"
+        >
+          <div className="font-bold sm:col-span-4">Add existing user to this company</div>
+          <div className="sm:col-span-2">
+            <label className="lbl">Username</label>
+            <input className="input" autoCapitalize="none" value={ex.username} onChange={(e) => setEx({ ...ex, username: e.target.value })} placeholder="someone who already has a login" />
+          </div>
+          <div>
+            <label className="lbl">Role</label>
+            <select className="input" value={ex.role} onChange={(e) => setEx({ ...ex, role: e.target.value })}>
+              <option value="staff">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button className="btn-light" disabled={busy || !ex.username}>Add to company</button>
         </form>
 
         {err && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{err}</p>}
