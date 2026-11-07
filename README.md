@@ -24,10 +24,12 @@ Stack: Next.js + Supabase (project `iq-app`, region ap-south-1) + Vercel.
 - convert_quotation_to_invoice(quotation_id, amount?, kind?, description?, due_date?)
 - issue_invoice(invoice_id)
 
-## Demo mode (current)
-No login. The app works on the company flagged `is_demo = true` ("Demo Contracting LLC").
-Anyone with the link can view and edit demo data, so use sample data only.
-Later: add Supabase Auth, set is_demo = false, and link users through company_members.
+## Users and login
+- First visit: /setup creates the owner (admin) account. After that it is closed.
+- Admin > Users: create users with a username and password, change passwords, disable, make admin.
+- Testing phase: usernames map to internal emails (username@iq.local) and passwords get a fixed prefix
+  so short passwords like 1234 work. Logic in lib/auth.ts and supabase/functions/admin-users.
+- Before real customers: require strong passwords.
 
 ## Run
 npm install

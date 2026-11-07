@@ -1,25 +1,29 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/quotations", label: "Quotations" },
-  { href: "/invoices", label: "Invoices" },
-  { href: "/settings", label: "Settings" },
-];
+import { useMe } from "./AuthGate";
+import { logout } from "@/lib/auth";
 
 export default function Nav() {
   const path = usePathname();
-  if (path.endsWith("/print")) return null;
+  const { me, isAdmin } = useMe();
+  if (path.endsWith("/print") || path === "/login" || path === "/setup") return null;
+
+  const links = [
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+    { href: "/", label: "Dashboard" },
+    { href: "/quotations", label: "Quotations" },
+    { href: "/invoices", label: "Invoices" },
+  ];
+
   return (
     <header className="no-print sticky top-0 z-20 text-white shadow" style={{ background: "var(--brand)" }}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-lg font-black" style={{ background: "var(--accent)" }}>
             IQ
           </span>
-          <span className="hidden font-semibold sm:block">Quotations &amp; Invoices</span>
+          <span className="hidden font-semibold lg:block">Quotations &amp; Invoices</span>
         </Link>
         <nav className="flex gap-1 overflow-x-auto text-sm">
           {links.map((l) => {
@@ -35,9 +39,12 @@ export default function Nav() {
             );
           })}
         </nav>
-      </div>
-      <div className="bg-amber-400 py-0.5 text-center text-[11px] font-semibold text-amber-950">
-        DEMO MODE: use sample data only
+        <div className="flex shrink-0 items-center gap-2 text-sm">
+          <span className="hidden text-white/80 sm:block">{me?.full_name || me?.username}</span>
+          <button className="rounded-lg border border-white/30 px-2.5 py-1 hover:bg-white/10" onClick={logout}>
+            Logout
+          </button>
+        </div>
       </div>
     </header>
   );

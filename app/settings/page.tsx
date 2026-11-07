@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
 import type { Company } from "@/lib/types";
+import Link from "next/link";
+import AdminOnly from "@/components/AdminOnly";
 
 const FIELDS: { k: keyof Company; label: string; type?: string; full?: boolean }[] = [
   { k: "name", label: "Company name" },
@@ -55,8 +57,12 @@ export default function Settings() {
   };
 
   return (
+    <AdminOnly>
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Company settings</h1>
+      <div>
+        <Link href="/admin" className="text-sm text-slate-500">← Admin</Link>
+        <h1 className="text-2xl font-bold">Company settings</h1>
+      </div>
       <p className="text-sm text-slate-500">These details appear on every quotation and invoice.</p>
       <div className="card grid gap-3 p-4 sm:grid-cols-2">
         {FIELDS.map((fd) => (
@@ -82,5 +88,6 @@ export default function Settings() {
       {msg && <p className="text-sm font-medium text-emerald-700">{msg}</p>}
       <button className="btn-primary" onClick={save}>Save settings</button>
     </div>
+    </AdminOnly>
   );
 }
