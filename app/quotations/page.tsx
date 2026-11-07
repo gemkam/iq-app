@@ -1,9 +1,10 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
-import { date, money } from "@/lib/format";
+import { date } from "@/lib/format";
 import Badge from "@/components/Badge";
 import Explain from "@/components/Explain";
 import ShareButton from "@/components/ShareButton";
@@ -78,7 +79,7 @@ export default function Quotations() {
               <p className="truncate text-sm text-slate-500">
                 {r.project_name || "-"} {r.project_code ? `(${r.project_code})` : ""} · {date(r.quote_date)}
               </p>
-              <p className="mt-1 text-lg font-bold">{money(r.total)}</p>
+              <p className="mt-1 text-lg font-bold"><Omr v={r.total} /></p>
             </Link>
             <ShareButton token={r.share_token} title={`Quotation ${r.code}`} clientName={r.clients?.name} total={r.total} mobile={r.mobile} />
           </div>

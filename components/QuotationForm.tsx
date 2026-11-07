@@ -1,4 +1,5 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACCEPT, MAX_FILE, fileSize, uploadFiles } from "@/lib/attachments";
 import { useRouter } from "next/navigation";
@@ -303,7 +304,7 @@ export default function QuotationForm({
             <div className="flex gap-2">
               <select className="input max-w-[160px]" value={f.discount_type} onChange={(e) => set("discount_type", e.target.value)}>
                 <option value="none">No discount</option>
-                <option value="amount">Amount (OMR)</option>
+                <option value="amount">Fixed amount</option>
                 <option value="percent">Percent (%)</option>
               </select>
               {f.discount_type !== "none" && (
@@ -338,8 +339,8 @@ export default function QuotationForm({
           {t.discount > 0 && <Row k="After discount" v={num(t.net)} />}
           <Row k={`VAT (${vatRate}%)`} v={num(t.vat)} />
           <div className="flex justify-between border-t border-slate-200 pt-2 text-lg font-black">
-            <span>Total ({company.currency})</span>
-            <span>{num(t.total)}</span>
+            <span>Total</span>
+            <Omr v={t.total} />
           </div>
           <Explain title="How the total is calculated" className="mt-3">
             <Calc label="Subtotal" formula="sum of all line amounts" result={num(t.subtotal)} />

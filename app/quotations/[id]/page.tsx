@@ -1,10 +1,11 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
-import { date, label, money, num, round3 } from "@/lib/format";
+import { date, label, num, round3 } from "@/lib/format";
 import Badge from "@/components/Badge";
 import History from "@/components/History";
 import QuotationForm from "@/components/QuotationForm";
@@ -64,7 +65,7 @@ export default function QuotationPage() {
             <Badge status={q.status} />
           </div>
           <p className="text-sm text-slate-500">
-            {q.clients?.name} · {date(q.quote_date)} · {money(q.total)}
+            {q.clients?.name} · {date(q.quote_date)} · <Omr v={q.total} />
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -113,7 +114,7 @@ export default function QuotationPage() {
                 <Badge status={i.status} />
               </div>
               <div className="text-right text-sm">
-                <div className="font-bold">{money(i.total)}</div>
+                <div className="font-bold"><Omr v={i.total} /></div>
                 <div className="text-slate-500">Balance {num(i.balance)}</div>
               </div>
             </Link>

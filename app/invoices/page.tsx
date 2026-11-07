@@ -1,9 +1,10 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
-import { date, label, money, num } from "@/lib/format";
+import { date, label, num } from "@/lib/format";
 import Badge from "@/components/Badge";
 import Explain from "@/components/Explain";
 import ShareButton from "@/components/ShareButton";
@@ -44,7 +45,7 @@ export default function Invoices() {
         <h1 className="text-2xl font-bold">Invoices</h1>
         <div className="text-right">
           <div className="text-xs text-slate-500">Outstanding (shown)</div>
-          <div className="text-lg font-bold text-red-600">{money(outstanding)}</div>
+          <div className="text-lg font-bold text-red-600"><Omr v={outstanding} /></div>
         </div>
       </div>
       <Explain title="Invoices">
@@ -83,7 +84,7 @@ export default function Invoices() {
                 {r.quotations?.code} {r.quotations?.project_name ? `· ${r.quotations.project_name}` : ""} · {date(r.issue_date)}
               </p>
               <p className="mt-1 text-lg font-bold">
-                {money(r.total)}
+                <Omr v={r.total} />
                 {Number(r.balance) > 0 && r.status !== "draft" && <span className="ml-2 text-sm font-medium text-red-600">Balance {num(r.balance)}</span>}
               </p>
             </Link>

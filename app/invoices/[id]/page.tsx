@@ -1,10 +1,11 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useCompany } from "@/lib/useCompany";
-import { date, label, money, num } from "@/lib/format";
+import { date, label, num } from "@/lib/format";
 import Badge from "@/components/Badge";
 import History from "@/components/History";
 import Explain, { Calc } from "@/components/Explain";
@@ -150,9 +151,9 @@ export default function InvoicePage() {
       </Explain>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Box k="Total" v={money(inv.total)} />
-        <Box k="Received" v={money(inv.amount_paid)} tone="text-emerald-700" />
-        <Box k="Balance" v={money(inv.balance)} tone={Number(inv.balance) > 0 ? "text-red-600" : "text-slate-400"} />
+        <Box k="Total" v={<Omr v={inv.total} />} />
+        <Box k="Received" v={<Omr v={inv.amount_paid} />} tone="text-emerald-700" />
+        <Box k="Balance" v={<Omr v={inv.balance} />} tone={Number(inv.balance) > 0 ? "text-red-600" : "text-slate-400"} />
       </div>
 
       <div className="card grid gap-3 p-4 text-sm sm:grid-cols-2">
@@ -222,7 +223,7 @@ export default function InvoicePage() {
           {pays.map((p) => (
             <div key={p.id} className="flex items-center justify-between border-t border-slate-100 pt-2 text-sm">
               <div>
-                <b>{money(p.amount)}</b> · {date(p.paid_on)} · {label(p.method || "")} {p.reference && `· ${p.reference}`}
+                <b><Omr v={p.amount} /></b> · {date(p.paid_on)} · {label(p.method || "")} {p.reference && `· ${p.reference}`}
               </div>
               {!isGuest && <button className="text-xs text-red-600" onClick={() => removePayment(p.id)}>Delete</button>}
             </div>
@@ -259,7 +260,7 @@ export default function InvoicePage() {
   );
 }
 
-function Box({ k, v, tone = "" }: { k: string; v: string; tone?: string }) {
+function Box({ k, v, tone = "" }: { k: string; v: React.ReactNode; tone?: string }) {
   return (
     <div className="card p-4">
       <p className="text-xs font-semibold uppercase text-slate-500">{k}</p>

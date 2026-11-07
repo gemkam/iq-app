@@ -1,4 +1,5 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -197,8 +198,10 @@ export default function Dashboard() {
             <div className="glass min-w-[260px] flex-1 rounded-2xl p-5 sm:max-w-sm">
               <p className="text-xs font-semibold uppercase tracking-widest text-white/60">Money to collect</p>
               <p className="mt-1 text-4xl font-black tracking-tight">
-                <span className="mr-1 align-top text-base font-semibold text-white/60">OMR</span>
-                <Counter value={d.receivable} />
+                <span className="omr">
+                  <OmrSign className="text-cyan-300" />
+                  <Counter value={d.receivable} />
+                </span>
               </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
                 <div
@@ -215,7 +218,7 @@ export default function Dashboard() {
                   className="pulse-red mt-3 flex items-center justify-between rounded-xl bg-rose-600/90 px-3 py-2 text-sm font-semibold"
                 >
                   <span>⚠ {d.overdue.length} overdue</span>
-                  <span>OMR {num(d.overdueValue)}</span>
+                  <Omr v={d.overdueValue} />
                 </Link>
               )}
             </div>
@@ -308,7 +311,7 @@ export default function Dashboard() {
                     <div className="flex items-baseline justify-between gap-2 text-sm">
                       <span className="truncate font-medium">{c.name}</span>
                       <span className={`shrink-0 font-bold ${c.balance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                        {c.balance > 0 ? `OMR ${num(c.balance)}` : "Paid ✓"}
+                        {c.balance > 0 ? <Omr v={c.balance} /> : "Paid ✓"}
                       </span>
                     </div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-rose-100">
@@ -368,9 +371,12 @@ function Kpi({ title, count, value, color, icon, delay }: { title: string; count
         <span className="text-lg">{icon}</span>
       </div>
       <p className="mt-2 text-xl font-black sm:text-2xl">
-        <Counter value={value} />
+        <span className="omr">
+          <OmrSign className="opacity-70" />
+          <Counter value={value} />
+        </span>
       </p>
-      <p className="text-xs text-white/50">{count !== null ? <><Counter value={count} money={false} /> documents</> : "OMR in the bank"}</p>
+      <p className="text-xs text-white/50">{count !== null ? <><Counter value={count} money={false} /> documents</> : "in the bank"}</p>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 "use client";
+import Omr, { OmrSign } from "@/components/Omr";
 import { date, num } from "@/lib/format";
 import type { Company, Item, Unit } from "@/lib/types";
 
@@ -117,13 +118,15 @@ export default function PrintDoc({
             {totals.map((t) => (
               <tr key={t.k} className={t.bold ? "border-t-2 border-slate-800 text-base font-black" : ""}>
                 <td className="px-2 py-1">{t.k}</td>
-                <td className="px-2 py-1 text-right">{num(t.v)}</td>
+                <td className="px-2 py-1 text-right">{t.bold ? <Omr v={t.v} /> : num(t.v)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="mt-1 text-right text-xs text-slate-500">All amounts in {company.currency}</p>
+      <p className="mt-1 text-right text-xs text-slate-500">
+        All amounts in Omani Rial (<OmrSign />)
+      </p>
 
       {footer}
 

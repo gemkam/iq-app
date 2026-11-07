@@ -61,6 +61,31 @@ body {
   @apply px-3 py-2 text-sm;
 }
 
+/* Omani Rial sign (mask so it follows text colour) */
+.omr {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.18em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.omr-sign {
+  display: inline-block;
+  width: 0.82em;
+  height: 0.8em;
+  flex: none;
+  align-self: center;
+  background-color: currentColor;
+  -webkit-mask: url("/omr-sign.svg") center / contain no-repeat;
+  mask: url("/omr-sign.svg") center / contain no-repeat;
+}
+@media print {
+  .omr-sign {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 /* Logo mark */
 .iq-mark {
   background: conic-gradient(from 200deg, #2563eb, #06b6d4, #e11d48, #2563eb);
