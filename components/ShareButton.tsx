@@ -152,6 +152,14 @@ export default function ShareButton({
               {pdfMsg && <p className={`px-3 pb-1 text-[11px] ${pdfState === "error" ? "text-red-600" : "text-emerald-700"}`}>{pdfMsg}</p>}
             </div>
 
+            <a href={`/edit-pdf/${token}`} className={`${item} rounded-lg border border-slate-200`}>
+              <span className="text-lg">✏️</span>
+              <span>
+                <b>Edit PDF before sending</b>
+                <span className="block text-[11px] text-slate-500">Change text, add notes, sign, stamp, highlight</span>
+              </span>
+            </a>
+
             {/* Link */}
             <p className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Or share a link</p>
             <a
