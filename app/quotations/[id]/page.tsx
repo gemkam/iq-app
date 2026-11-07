@@ -9,6 +9,8 @@ import Badge from "@/components/Badge";
 import History from "@/components/History";
 import QuotationForm from "@/components/QuotationForm";
 import Explain, { Calc } from "@/components/Explain";
+import ShareButton from "@/components/ShareButton";
+import Attachments from "@/components/Attachments";
 import type { Invoice, Item, Quotation } from "@/lib/types";
 
 export default function QuotationPage() {
@@ -63,6 +65,7 @@ export default function QuotationPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ShareButton token={q.share_token} title={`Quotation ${q.code}`} clientName={q.clients?.name} total={q.total} mobile={q.mobile} />
           <Link href={`/quotations/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
           {q.status === "draft" && <button className="btn-light" onClick={() => setStatus("submitted")}>Mark submitted</button>}
           {(q.status === "draft" || q.status === "submitted") && (
@@ -79,6 +82,7 @@ export default function QuotationPage() {
       <Explain title="What you can do here">
         <p>Edit the quotation and press <b>Save changes</b>. Every change is kept in the <b>Change history</b> at the bottom.</p>
         <p>Use the buttons above to mark it Submitted, Approved or Rejected. <b>Print / PDF</b> opens a printable page (choose &quot;Save as PDF&quot; in the print window).</p>
+        <p><b>Share</b> sends a read-only link by WhatsApp, email or any app. The client opens it without a login and can save it as PDF.</p>
         <p>When the client agrees, use <b>Convert to Invoice</b> below. After that the quotation is locked.</p>
       </Explain>
 
@@ -113,6 +117,8 @@ export default function QuotationPage() {
           ))}
         </div>
       )}
+
+      <Attachments companyId={q.company_id} quotationId={q.id} />
 
       <History recordId={q.id} parentKey="quotation_id" />
     </div>

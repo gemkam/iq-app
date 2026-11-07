@@ -24,7 +24,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [me, setMe] = useState<Me | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const isPublic = PUBLIC.includes(path);
+  const isPublic = PUBLIC.includes(path) || path.startsWith("/share/");
+  const isShare = path.startsWith("/share/");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -57,9 +58,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       return;
     }
     loadMe(session.user.id);
-    if (isPublic) router.replace("/");
+    if (isPublic && !isShare) router.replace("/");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, isPublic]);
+  }, [session, isPublic, isShare]);
 
   if (isPublic) return <>{children}</>;
   if (session === undefined || (session && !me && !problem)) return <p className="p-6 text-slate-500">Loading...</p>;

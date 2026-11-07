@@ -53,6 +53,7 @@ export type Quotation = {
   total: number;
   notes: string | null;
   terms: string | null;
+  share_token: string;
   created_at: string;
   clients?: Client | null;
 };
@@ -91,6 +92,7 @@ export type Invoice = {
   status: InvoiceStatus;
   einvoice_status: string;
   issued_at: string | null;
+  share_token: string;
   created_at: string;
   clients?: Client | null;
   quotations?: Pick<Quotation, "code" | "project_name" | "project_code" | "location" | "attention_to" | "mobile" | "total"> | null;

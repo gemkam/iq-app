@@ -13,7 +13,7 @@ type Row = {
   changed_by: string | null;
 };
 
-const SKIP = new Set(["updated_at", "created_at", "id", "company_id", "quotation_id", "invoice_id", "amount", "code", "balance"]);
+const SKIP = new Set(["updated_at", "created_at", "id", "company_id", "quotation_id", "invoice_id", "amount", "code", "balance", "share_token"]);
 const NAMES: Record<string, string> = {
   quotations: "Quotation",
   quotation_items: "Item",

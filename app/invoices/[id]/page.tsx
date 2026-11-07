@@ -8,6 +8,8 @@ import { date, label, money, num } from "@/lib/format";
 import Badge from "@/components/Badge";
 import History from "@/components/History";
 import Explain, { Calc } from "@/components/Explain";
+import ShareButton from "@/components/ShareButton";
+import Attachments from "@/components/Attachments";
 import type { Invoice, Item, Payment } from "@/lib/types";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -111,6 +113,14 @@ export default function InvoicePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ShareButton
+            token={inv.share_token}
+            title={`Invoice ${inv.code}`}
+            clientName={inv.clients?.name}
+            total={inv.total}
+            mobile={inv.quotations?.mobile}
+            disabledReason={isDraft ? "Issue the invoice first. Draft invoices cannot be shared." : undefined}
+          />
           <Link href={`/invoices/${id}/print`} target="_blank" className="btn-light">Print / PDF</Link>
           {isDraft && (
             <>
@@ -238,6 +248,8 @@ export default function InvoicePage() {
           )}
         </div>
       )}
+
+      <Attachments companyId={inv.company_id} invoiceId={inv.id} />
 
       <History recordId={inv.id} parentKey="invoice_id" />
     </div>

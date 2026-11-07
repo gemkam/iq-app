@@ -17,6 +17,7 @@ export default function PrintDoc({
   terms,
   notes,
   footer,
+  shared,
 }: {
   company: Company;
   title: string;
@@ -30,13 +31,14 @@ export default function PrintDoc({
   terms?: string | null;
   notes?: string | null;
   footer?: React.ReactNode;
+  shared?: boolean;
 }) {
   const unitLabel = (c: string) => units.find((u) => u.code === c)?.label || c;
   return (
     <div className="mx-auto max-w-[800px] bg-white p-6 text-[13px] text-slate-900 sm:p-10 print:p-0">
       <div className="no-print mb-6 flex gap-2">
         <button className="btn-primary" onClick={() => window.print()}>Print / Save as PDF</button>
-        <button className="btn-light" onClick={() => window.close()}>Close</button>
+        {!shared && <button className="btn-light" onClick={() => window.close()}>Close</button>}
       </div>
 
       <header className="flex items-start justify-between gap-6 border-b-4 pb-4" style={{ borderColor: "var(--brand)" }}>
