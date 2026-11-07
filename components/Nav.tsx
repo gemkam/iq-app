@@ -19,6 +19,7 @@ export default function Nav() {
     { href: "/quotations", label: "Quotations" },
     { href: "/invoices", label: "Invoices" },
     { href: "/companies", label: "Companies" },
+    { href: "/tools", label: "Conversions" },
     ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
