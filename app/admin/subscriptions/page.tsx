@@ -22,7 +22,7 @@ type Co = {
 type Pay = { id: string; company_id: string; plan: string; months: number; amount: number; method: string | null; reference: string | null; period_to: string; created_at: string };
 type Owner = { company_id: string; full_name: string | null; username: string | null };
 
-const FILTERS: (SubState | "all")[] = ["all", "trial", "paid", "expired", "suspended"];
+const FILTERS: (SubState | "all")[] = ["all", "trial", "paid", "expired", "suspended", "unlimited"];
 
 export default function Subscriptions() {
   const { memberships, refresh } = useMe();
@@ -61,7 +61,8 @@ export default function Subscriptions() {
     .filter((r) => filter === "all" || r.s.state === filter)
     .sort((a, b) => {
       // most urgent first: expired, trial ending soon, then the rest
-      const rank = (x: typeof a) => (x.s.state === "expired" ? 0 : x.s.state === "trial" ? 1 : x.s.state === "paid" ? 2 : 3);
+      const rank = (x: typeof a) =>
+        x.s.state === "expired" ? 0 : x.s.state === "trial" ? 1 : x.s.state === "paid" ? 2 : x.s.state === "suspended" ? 3 : 4;
       return rank(a) - rank(b) || a.s.daysLeft - b.s.daysLeft;
     });
 
@@ -104,7 +105,7 @@ export default function Subscriptions() {
         <Explain title="How subscriptions work">
           <p>Every new company gets a <b>30-day free trial</b>. When the trial or the paid period ends, the company becomes <b>view only</b> for its owner: they can see and download everything but cannot create or change anything. Data is never deleted.</p>
           <p>When a customer pays you (bank transfer, cash, payment link), press <b>Record payment</b>. The paid period starts from today or from the current end date, whichever is later.</p>
-          <p>Administrators can always edit every company, even when it is expired.</p>
+          <p>Administrators can always edit every company, even when it is expired. Companies created by administrators are <b>Unlimited</b> (no trial, never expire). Use <b>Make unlimited</b> for any company that should never expire.</p>
         </Explain>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -147,11 +148,17 @@ export default function Subscriptions() {
 
                 <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                   <Info k="Plan" v={planLabel(c.plan)} />
-                  <Info k="Trial ends" v={date(c.trial_ends_at)} />
+                  <Info k="Trial ends" v={s.state === "unlimited" ? "No trial" : date(c.trial_ends_at)} />
                   <Info k="Paid until" v={c.paid_until ? date(c.paid_until) : "-"} />
                   <Info
                     k={s.state === "expired" ? "Expired" : "Days left"}
-                    v={s.state === "expired" || s.state === "suspended" ? date(s.endsAt) || "-" : `${s.daysLeft} days`}
+                    v={
+                      s.state === "unlimited"
+                        ? "No limit"
+                        : s.state === "expired" || s.state === "suspended"
+                          ? date(s.endsAt) || "-"
+                          : `${s.daysLeft} days`
+                    }
                     tone={s.state === "expired" ? "text-rose-500" : s.daysLeft <= 5 ? "text-amber-500" : ""}
                   />
                 </div>
@@ -173,6 +180,18 @@ export default function Subscriptions() {
                     onClick={() => act(() => supabase.rpc("extend_trial", { p_company: c.id, p_days: 30 }), `Trial of ${c.name} extended by 30 days.`)}
                   >
                     +30 days trial
+                  </button>
+                  <button
+                    className="btn-light"
+                    disabled={busy}
+                    onClick={() =>
+                      act(
+                        () => supabase.rpc("set_company_unlimited", { p_company: c.id, p_unlimited: c.plan !== "unlimited" }),
+                        c.plan === "unlimited" ? `${c.name} is back on trial / paid plan.` : `${c.name} is now Unlimited.`
+                      )
+                    }
+                  >
+                    {c.plan === "unlimited" ? "Remove unlimited" : "♾ Make unlimited"}
                   </button>
                   <button
                     className={c.suspended ? "btn-light text-emerald-600" : "btn-light text-rose-600"}

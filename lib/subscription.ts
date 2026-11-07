@@ -6,7 +6,7 @@ export type SubFields = {
   suspended: boolean;
 };
 
-export type SubState = "trial" | "paid" | "expired" | "suspended";
+export type SubState = "unlimited" | "trial" | "paid" | "expired" | "suspended";
 
 const DAY = 864e5;
 
@@ -14,6 +14,7 @@ export function subStatus(c: SubFields | null | undefined): { state: SubState; e
   if (!c) return { state: "trial", endsAt: null, daysLeft: 0 };
   const now = Date.now();
   if (c.suspended) return { state: "suspended", endsAt: null, daysLeft: 0 };
+  if (c.plan === "unlimited") return { state: "unlimited", endsAt: null, daysLeft: Infinity };
   const paid = c.paid_until ? new Date(c.paid_until).getTime() : 0;
   const trial = c.trial_ends_at ? new Date(c.trial_ends_at).getTime() : 0;
   if (paid > now) return { state: "paid", endsAt: c.paid_until, daysLeft: Math.ceil((paid - now) / DAY) };
@@ -21,9 +22,10 @@ export function subStatus(c: SubFields | null | undefined): { state: SubState; e
   return { state: "expired", endsAt: c.paid_until || c.trial_ends_at, daysLeft: 0 };
 }
 
-export const planLabel = (p: string) => ({ trial: "Free trial", basic: "Basic", pro: "Pro" } as Record<string, string>)[p] || p;
+export const planLabel = (p: string) => ({ trial: "Free trial", basic: "Basic", pro: "Pro", unlimited: "Unlimited" } as Record<string, string>)[p] || p;
 
 export const stateLabel: Record<SubState, string> = {
+  unlimited: "Unlimited",
   trial: "Free trial",
   paid: "Active",
   expired: "Expired",
@@ -31,6 +33,7 @@ export const stateLabel: Record<SubState, string> = {
 };
 
 export const stateColor: Record<SubState, string> = {
+  unlimited: "bg-blue-100 text-blue-700",
   trial: "bg-amber-100 text-amber-800",
   paid: "bg-emerald-100 text-emerald-700",
   expired: "bg-red-100 text-red-700",

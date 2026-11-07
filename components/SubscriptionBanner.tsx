@@ -6,8 +6,9 @@ import { date } from "@/lib/format";
 // Thin bar under the top menu: free-trial days left, renewal reminder, or view-only notice
 export default function SubscriptionBanner() {
   const { me, isAdmin, isGuest } = useMe();
-  if (!me || isGuest) return null;
+  if (!me || isGuest || isAdmin) return null;
   const s = subStatus(me.sub);
+  if (s.state === "unlimited") return null;
 
   if (s.state === "trial") {
     const urgent = s.daysLeft <= 5;

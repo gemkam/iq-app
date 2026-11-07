@@ -66,6 +66,8 @@ export function describe(r: ActivityRow, codes: Record<string, string>): Describ
         trial_extended: `Extended the free trial by ${n.days} days`,
         suspended: "Suspended the company",
         unsuspended: "Re-activated the company",
+        made_unlimited: "Made the company Unlimited (no trial, never expires)",
+        removed_unlimited: "Removed Unlimited from the company",
       };
       return { icon: "💳", color: "#f59e0b", text: map[r.action] || `Subscription ${r.action}`, group: "company" };
     }
